@@ -3,6 +3,15 @@
 A multi-agent AI system built with **LangGraph.js**, **MongoDB Atlas**, and **Atlas Auto-Embedding** (voyage-4).  
 An orchestrator classifies every incoming query and delegates it to one of three specialist agents — Hotels, Transport, or Policy — each with their own tools and per-user long-term memory.
 
+<p>
+  <img src="https://img.shields.io/badge/MongoDB_Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white" />
+  <img src="https://img.shields.io/badge/OpenAI_GPT--4o-412991?style=for-the-badge&logo=openai&logoColor=white" />
+  <img src="https://img.shields.io/badge/LangChain-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" />
+  <img src="https://img.shields.io/badge/Terraform-7B42BC?style=for-the-badge&logo=terraform&logoColor=white" />
+</p>
+
 ---
 
 ## Architecture
@@ -13,20 +22,20 @@ flowchart LR
     User(["👤 User"])
 
     subgraph App["Express API · :3000"]
-        ORC["🧠 Orchestrator\nGPT-4o-mini router"]
+        ORC["🧠 Orchestrator\nGPT-4o-mini · intent router"]
     end
 
-    subgraph Agents["LangGraph Agents  —  GPT-4o + Tool Calling"]
+    subgraph Agents["LangGraph.js Agents  ·  GPT-4o + Tool Calling"]
         direction TB
         H["🏨 Hotels\nSearch · Book · Cancel"]
         T["🚂 Transport\nRoutes · Book · Cancel"]
         P["📋 Policy\nRules · Compliance"]
     end
 
-    subgraph Atlas["☁️ MongoDB Atlas  —  M10 · AWS eu-west-1"]
+    subgraph Atlas["MongoDB Atlas  ·  M10 · AWS eu-west-1"]
         direction TB
-        HD[("holiday_db\nhotels · bookings\ntravel_policies")]
-        MEM[("agent_memory\nlong_term_memory\ncheckpoints")]
+        HD[("holiday_db\nhotels · bookings · policies\n— autoEmbed voyage-4 —")]
+        MEM[("agent_memory\nlong_term_memory · checkpoints\n— autoEmbed voyage-4 —")]
     end
 
     User -->|"POST /chat"| ORC
