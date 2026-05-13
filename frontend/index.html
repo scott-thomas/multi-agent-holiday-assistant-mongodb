@@ -3,29 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Amadeus AI Assistant</title>
+  <title>Holiday Planning Assistant</title>
   <style>
     /* ─── Reset & Variables ─────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --amadeus-dark:   #00205B;
-      --amadeus-mid:    #003580;
-      --amadeus-blue:   #0070F3;
-      --amadeus-light:  #E8F0FE;
-      --sidebar-bg:     #0F1A2E;
-      --sidebar-hover:  #1A2C48;
-      --sidebar-active: #1D3557;
+      --primary-dark:   #064e3b;
+      --primary-mid:    #065f46;
+      --primary:        #059669;
+      --primary-light:  #d1fae5;
+      --sidebar-bg:     #0d1f14;
+      --sidebar-hover:  #162b1e;
+      --sidebar-active: #1a3526;
       --bg:             #F1F5F9;
       --surface:        #FFFFFF;
       --border:         #E2E8F0;
       --text-primary:   #0F172A;
       --text-secondary: #64748B;
       --text-muted:     #94A3B8;
-      --user-bubble:    #0070F3;
-      --agent-fares:       #0EA5E9;
-      --agent-reservations:#10B981;
-      --agent-policy:      #F59E0B;
+      --user-bubble:    #059669;
+      --agent-hotels:      #16a34a;
+      --agent-transport:   #2563eb;
+      --agent-policy:      #9333ea;
       --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
       --shadow-md: 0 4px 12px rgba(0,0,0,.10);
       --radius:    12px;
@@ -65,7 +65,7 @@
 
     .logo-icon {
       width: 36px; height: 36px;
-      background: var(--amadeus-blue);
+      background: var(--primary);
       border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
       font-size: 18px;
@@ -77,8 +77,8 @@
     #new-chat-btn {
       width: 100%;
       padding: 9px 14px;
-      background: rgba(0,112,243,.25);
-      border: 1px solid rgba(0,112,243,.4);
+      background: rgba(5,150,105,.25);
+      border: 1px solid rgba(5,150,105,.4);
       border-radius: 8px;
       color: #fff;
       font-size: 13px;
@@ -87,7 +87,7 @@
       display: flex; align-items: center; gap: 8px;
       transition: background .15s;
     }
-    #new-chat-btn:hover { background: rgba(0,112,243,.45); }
+    #new-chat-btn:hover { background: rgba(5,150,105,.45); }
 
     .section-label {
       padding: 12px 16px 4px;
@@ -150,7 +150,7 @@
 
     .user-avatar {
       width: 32px; height: 32px;
-      background: var(--amadeus-mid);
+      background: var(--primary-mid);
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       font-size: 13px; font-weight: 700;
@@ -210,9 +210,9 @@
       letter-spacing: .5px;
     }
 
-    .agent-tag.fares        { background: #E0F2FE; color: #0369A1; }
-    .agent-tag.reservations { background: #D1FAE5; color: #065F46; }
-    .agent-tag.policy       { background: #FEF3C7; color: #92400E; }
+    .agent-tag.hotels      { background: #d1fae5; color: #065f46; }
+    .agent-tag.transport   { background: #dbeafe; color: #1d4ed8; }
+    .agent-tag.policy      { background: #f3e8ff; color: #7e22ce; }
 
     /* ─── Messages ───────────────────────────────────────────────────── */
     #messages-container {
@@ -278,8 +278,8 @@
       box-shadow: var(--shadow-sm);
     }
     .suggestion-card:hover {
-      border-color: var(--amadeus-blue);
-      box-shadow: 0 0 0 3px rgba(0,112,243,.08);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(5,150,105,.08);
     }
 
     .suggestion-icon  { font-size: 20px; margin-bottom: 6px; }
@@ -349,7 +349,7 @@
       font-size: 12px;
     }
     .bubble pre code { background: none; padding: 0; color: inherit; }
-    .bubble a { color: var(--amadeus-blue); text-decoration: underline; }
+    .bubble a { color: var(--primary); text-decoration: underline; }
     .bubble table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 12px; }
     .bubble th, .bubble td { border: 1px solid var(--border); padding: 6px 10px; }
     .bubble th { background: #F8FAFC; font-weight: 600; }
@@ -398,9 +398,9 @@
       margin-bottom: 8px;
     }
 
-    .routing-badge.fares        { background: #E0F2FE; color: #0369A1; }
-    .routing-badge.reservations { background: #D1FAE5; color: #065F46; }
-    .routing-badge.policy       { background: #FEF3C7; color: #92400E; }
+    .routing-badge.hotels      { background: #d1fae5; color: #065f46; }
+    .routing-badge.transport   { background: #dbeafe; color: #1d4ed8; }
+    .routing-badge.policy      { background: #f3e8ff; color: #7e22ce; }
 
     /* ─── Input area ─────────────────────────────────────────────────── */
     #input-area {
@@ -429,12 +429,12 @@
       line-height: 1.5;
       transition: border-color .15s;
     }
-    #message-input:focus { border-color: var(--amadeus-blue); }
+    #message-input:focus { border-color: var(--primary); }
     #message-input::placeholder { color: var(--text-muted); }
 
     #send-btn {
       width: 44px; height: 44px;
-      background: var(--amadeus-blue);
+      background: var(--primary);
       border: none;
       border-radius: 12px;
       cursor: pointer;
@@ -443,7 +443,7 @@
       transition: background .15s, transform .1s;
       color: #fff;
     }
-    #send-btn:hover   { background: #005AD1; }
+    #send-btn:hover   { background: var(--primary-mid); }
     #send-btn:active  { transform: scale(.94); }
     #send-btn:disabled { background: var(--border); cursor: not-allowed; }
 
@@ -461,10 +461,10 @@
 <aside id="sidebar">
   <div class="sidebar-header">
     <div class="logo">
-      <div class="logo-icon">✈️</div>
+      <div class="logo-icon">🏖️</div>
       <div>
-        <div class="logo-text">Amadeus AI</div>
-        <div class="logo-sub">Flight Assistant</div>
+        <div class="logo-text">Holiday AI</div>
+        <div class="logo-sub">Planning Assistant</div>
       </div>
     </div>
     <button id="new-chat-btn">
@@ -499,43 +499,43 @@
 
     <!-- Welcome screen -->
     <div id="welcome-screen">
-      <div class="welcome-icon">✈️</div>
-      <h1 class="welcome-title">Amadeus Flight Assistant</h1>
+      <div class="welcome-icon">🏖️</div>
+      <h1 class="welcome-title">Holiday Planning Assistant</h1>
       <p class="welcome-sub">
-        Ask about flight fares, make a reservation, or look up Amadeus booking policies.
+        Search hotels, plan your journey from A to B, or check travel policies.
         The AI automatically routes your question to the right specialist.
       </p>
 
       <div class="suggestions">
-        <div class="suggestion-card" data-query="Find me the cheapest economy fares from Madrid to London">
-          <div class="suggestion-icon">🔍</div>
-          <div class="suggestion-title">Search fares</div>
-          <div class="suggestion-sub">Cheapest MAD → LHR economy fares</div>
+        <div class="suggestion-card" data-query="Find me a 4-star beachfront hotel in Santorini for 2 adults">
+          <div class="suggestion-icon">🏨</div>
+          <div class="suggestion-title">Search hotels</div>
+          <div class="suggestion-sub">4-star beachfront in Santorini</div>
         </div>
-        <div class="suggestion-card" data-query="I want to book a business class seat on flight IB3162 from Madrid to London on 2026-07-15">
+        <div class="suggestion-card" data-query="How do I get from London to Barcelona? Show me all transport options">
+          <div class="suggestion-icon">🚂</div>
+          <div class="suggestion-title">Plan a journey</div>
+          <div class="suggestion-sub">London → Barcelona transport options</div>
+        </div>
+        <div class="suggestion-card" data-query="What is the cancellation policy if I need to cancel my hotel booking?">
           <div class="suggestion-icon">📋</div>
-          <div class="suggestion-title">Make a reservation</div>
-          <div class="suggestion-sub">Book a business class flight</div>
+          <div class="suggestion-title">Cancellation policy</div>
+          <div class="suggestion-sub">Hotel booking cancellation rules</div>
         </div>
-        <div class="suggestion-card" data-query="What is the refund policy for non-refundable economy tickets?">
-          <div class="suggestion-icon">📖</div>
-          <div class="suggestion-title">Refund policy</div>
-          <div class="suggestion-sub">Non-refundable economy ticket rules</div>
-        </div>
-        <div class="suggestion-card" data-query="Compare fares between Paris CDG and New York JFK across all cabin classes">
+        <div class="suggestion-card" data-query="Compare boutique hotels in Paris under £200 per night">
           <div class="suggestion-icon">💰</div>
-          <div class="suggestion-title">Compare fares</div>
-          <div class="suggestion-sub">CDG → JFK pricing across all cabins</div>
+          <div class="suggestion-title">Compare hotels</div>
+          <div class="suggestion-sub">Boutique Paris hotels under £200/night</div>
         </div>
-        <div class="suggestion-card" data-query="What are the change fee rules for business class fares?">
-          <div class="suggestion-icon">✏️</div>
-          <div class="suggestion-title">Change fees</div>
-          <div class="suggestion-sub">Business class modification policies</div>
+        <div class="suggestion-card" data-query="Can I bring my dog to a resort in Mallorca?">
+          <div class="suggestion-icon">🐾</div>
+          <div class="suggestion-title">Pet policy</div>
+          <div class="suggestion-sub">Pet-friendly resorts in Mallorca</div>
         </div>
-        <div class="suggestion-card" data-query="What baggage allowance do I get on Iberia economy fares?">
-          <div class="suggestion-icon">🧳</div>
-          <div class="suggestion-title">Baggage rules</div>
-          <div class="suggestion-sub">Iberia economy baggage allowance</div>
+        <div class="suggestion-card" data-query="What is the cheapest way to travel from Paris to Amsterdam?">
+          <div class="suggestion-icon">🗺️</div>
+          <div class="suggestion-title">Budget travel</div>
+          <div class="suggestion-sub">Cheapest Paris → Amsterdam routes</div>
         </div>
       </div>
     </div>
@@ -548,7 +548,7 @@
     <textarea
       id="message-input"
       rows="1"
-      placeholder="Ask about flights, reservations, or policies…"
+      placeholder="Ask about hotels, transport, or travel policies…"
     ></textarea>
     <button id="send-btn" title="Send (Enter)">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -562,7 +562,7 @@
 
 <script>
   // ─── State ──────────────────────────────────────────────────────────────────
-  const STORAGE_KEY = 'amadeus_ai_state';
+  const STORAGE_KEY = 'holiday_ai_state';
 
   const state = {
     userId: '',
@@ -609,12 +609,12 @@
   }
 
   function agentLabel(agent) {
-    const map = { fares: '✈️ Fares', reservations: '📋 Reservations', policy: '📖 Policy' };
+    const map = { hotels: '🏨 Hotels', transport: '🚂 Transport', policy: '📋 Policy' };
     return map[agent] || agent;
   }
 
   function agentColor(agent) {
-    const map = { fares: '#0EA5E9', reservations: '#10B981', policy: '#F59E0B' };
+    const map = { hotels: '#16a34a', transport: '#2563eb', policy: '#9333ea' };
     return map[agent] || '#94A3B8';
   }
 
@@ -754,7 +754,7 @@
         ? `<div class="routing-badge ${agent}">${agentLabel(agent)}</div>`
         : '';
       group.innerHTML = `
-        <div class="message-meta">Amadeus AI</div>
+        <div class="message-meta">Holiday AI</div>
         <div class="bubble">${badge}${renderMarkdown(content)}</div>
       `;
     }
@@ -770,7 +770,7 @@
     loader.className = 'message-group bot';
     loader.id = 'loading-indicator';
     loader.innerHTML = `
-      <div class="message-meta">Amadeus AI</div>
+      <div class="message-meta">Holiday AI</div>
       <div class="loading-bubble">
         <div class="dot"></div><div class="dot"></div><div class="dot"></div>
       </div>
