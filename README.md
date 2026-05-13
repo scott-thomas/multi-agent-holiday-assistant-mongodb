@@ -8,69 +8,39 @@ An orchestrator classifies every incoming query and delegates it to one of three
 ## Architecture
 
 ```mermaid
-%%{init: {"theme": "base", "themeVariables": {"primaryColor": "#f0fdf4", "primaryBorderColor": "#16a34a", "primaryTextColor": "#14532d", "lineColor": "#6b7280", "secondaryColor": "#f8fafc", "tertiaryColor": "#ffffff", "fontFamily": "ui-sans-serif, system-ui, sans-serif", "fontSize": "14px", "clusterBkg": "#f8fafc", "clusterBorder": "#16a34a", "edgeLabelBackground": "#ffffff"}}}%%
-flowchart TD
-    User(["👤 Client\nPOST /chat\n{ userId, message }"])
+%%{init: {"theme": "base", "themeVariables": {"primaryColor": "#ffffff", "primaryBorderColor": "#d1d5db", "primaryTextColor": "#111827", "lineColor": "#9ca3af", "secondaryColor": "#f9fafb", "clusterBkg": "#f9fafb", "clusterBorder": "#e5e7eb", "edgeLabelBackground": "#ffffff", "fontFamily": "ui-sans-serif, system-ui, sans-serif", "fontSize": "13px"}}}%%
+flowchart LR
+    User(["👤 User"])
 
-    subgraph Server["⚡ Express Server — index.ts  :3000"]
-        API["REST API"]
+    subgraph App["Express API · :3000"]
+        ORC["🧠 Orchestrator\nGPT-4o-mini router"]
     end
 
-    subgraph ORC["🧠 Orchestrator — orchestrator.ts"]
-        LoadMem["① Load long-term memories\nMongoDBStore.search()"]
-        Router["② GPT-4o-mini\nStructured intent classification"]
-        SaveMem["④ Persist interaction summary\nMongoDBStore.put()"]
+    subgraph Agents["LangGraph Agents  —  GPT-4o + Tool Calling"]
+        direction TB
+        H["🏨 Hotels\nSearch · Book · Cancel"]
+        T["🚂 Transport\nRoutes · Book · Cancel"]
+        P["📋 Policy\nRules · Compliance"]
     end
 
-    subgraph AGENTS["🤖 LangGraph Specialist Agents — GPT-4o with Tool Calling"]
-        direction LR
-        HotelsA["🏨 Hotels Agent\n─────────────────────\nsearch_hotels\nget_hotels_by_destination\nget_room_availability\ncreate_booking · cancel_booking"]
-        TransA["🚂 Transport Agent\n─────────────────────\nsearch_transport_options\nget_routes_between\nget_local_transfers\nbook_transport · cancel_transport"]
-        PolicyA["📋 Policy Agent\n─────────────────────\nsearch_policy\nget_policy_by_category\nget_cancellation_terms\ncheck_booking_compliance"]
+    subgraph Atlas["☁️ MongoDB Atlas  —  M10 · AWS eu-west-1"]
+        direction TB
+        HD[("holiday_db\nhotels · bookings\ntravel_policies")]
+        MEM[("agent_memory\nlong_term_memory\ncheckpoints")]
     end
 
-    subgraph ATLAS["☁️  MongoDB Atlas — M10 Replica Set · AWS eu-west-1"]
-        subgraph HDB["holiday_db"]
-            HC[("🏨 hotels\nhotels_vector_index\nautoEmbed voyage-4")]
-            BC[("📦 bookings\nhotel + transport")]
-            PC[("📋 travel_policies\npolicy_vector_index\nautoEmbed voyage-4")]
-        end
-        subgraph MDB["agent_memory"]
-            LT[("🧠 long_term_memory\nmemory_vector_index\nautoEmbed voyage-4")]
-            CP[("⏱ checkpoints\n+ checkpoint_writes\n30-day TTL")]
-        end
-    end
+    User -->|"POST /chat"| ORC
+    ORC --> H & T & P
+    ORC <-->|"long-term memory"| MEM
+    H & T & P -->|"read / write"| HD
+    H & T & P -.->|"short-term memory"| MEM
+    ORC -->|"response"| User
 
-    User -->|"userId + message"| API
-    API --> LoadMem
-    LoadMem <-->|"$vectorSearch"| LT
-    LoadMem --> Router
-    Router -->|"hotels"| HotelsA
-    Router -->|"transport"| TransA
-    Router -->|"policy"| PolicyA
-    HotelsA & TransA & PolicyA --> SaveMem
-    SaveMem -->|"upsert summary"| LT
-    SaveMem -->|"③ reply"| API
-    API -->|response| User
-
-    HotelsA <-->|"$vectorSearch + CRUD"| HC
-    HotelsA <-->|"write / read"| BC
-    TransA <-->|"write / read"| BC
-    PolicyA <-->|"$vectorSearch"| PC
-    PolicyA <-->|"read"| BC
-
-    HotelsA -. "MongoDBSaver\nshort-term memory" .-> CP
-    TransA -. "MongoDBSaver\nshort-term memory" .-> CP
-    PolicyA -. "MongoDBSaver\nshort-term memory" .-> CP
-
-    style HC fill:#f0fdf4,stroke:#16a34a,color:#14532d
-    style BC fill:#eff6ff,stroke:#3b82f6,color:#1e3a8a
-    style PC fill:#f0fdf4,stroke:#16a34a,color:#14532d
-    style LT fill:#fdf4ff,stroke:#a855f7,color:#581c87
-    style CP fill:#fff7ed,stroke:#f97316,color:#7c2d12
-    style HotelsA fill:#f0fdf4,stroke:#16a34a,color:#14532d
-    style TransA fill:#eff6ff,stroke:#3b82f6,color:#1e3a8a
-    style PolicyA fill:#fdf4ff,stroke:#a855f7,color:#581c87
+    style H fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    style T fill:#eff6ff,stroke:#3b82f6,color:#1e3a8a
+    style P fill:#fdf4ff,stroke:#a855f7,color:#581c87
+    style HD fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    style MEM fill:#fdf4ff,stroke:#a855f7,color:#581c87
 ```
 
 ### Memory Strategy
