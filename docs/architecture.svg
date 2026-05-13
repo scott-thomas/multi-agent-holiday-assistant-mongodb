@@ -1,182 +1,298 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 540" width="980" height="540" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
-  <defs>
-    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3.5" orient="auto">
-      <path d="M0,0 L0,7 L8,3.5 z" fill="#6b7280"/>
-    </marker>
-    <marker id="arrow-green" markerWidth="8" markerHeight="8" refX="7" refY="3.5" orient="auto">
-      <path d="M0,0 L0,7 L8,3.5 z" fill="#16a34a"/>
-    </marker>
-    <marker id="arrow-dashed" markerWidth="8" markerHeight="8" refX="7" refY="3.5" orient="auto">
-      <path d="M0,0 L0,7 L8,3.5 z" fill="#a855f7"/>
-    </marker>
-    <filter id="shadow" x="-4%" y="-4%" width="108%" height="116%">
-      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#00000018"/>
-    </filter>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 620" width="1080" height="620" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif">
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+    text { font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif; }
+  </style>
 
-  <!-- Background -->
-  <rect width="980" height="540" fill="#f9fafb" rx="12"/>
+  <!-- Shadows -->
+  <filter id="s1" x="-8%" y="-8%" width="116%" height="130%">
+    <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#00000022"/>
+    <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#00000014"/>
+  </filter>
+  <filter id="s2" x="-4%" y="-4%" width="108%" height="118%">
+    <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#00000030"/>
+  </filter>
 
-  <!-- ── USER ─────────────────────────────────────────── -->
-  <g filter="url(#shadow)">
-    <rect x="28" y="220" width="110" height="80" rx="10" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
-  </g>
-  <!-- Person icon -->
-  <circle cx="83" cy="244" r="12" fill="none" stroke="#374151" stroke-width="2"/>
-  <path d="M60,280 Q60,262 83,262 Q106,262 106,280" fill="none" stroke="#374151" stroke-width="2"/>
-  <text x="83" y="297" text-anchor="middle" font-size="11" fill="#374151" font-weight="600">User</text>
+  <!-- Gradients -->
+  <linearGradient id="bg-grad" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#0f1117"/>
+    <stop offset="100%" stop-color="#141820"/>
+  </linearGradient>
+  <linearGradient id="orch-grad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#1e2230"/>
+    <stop offset="100%" stop-color="#181c28"/>
+  </linearGradient>
+  <linearGradient id="agent-zone-grad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#1a2235"/>
+    <stop offset="100%" stop-color="#141c2e"/>
+  </linearGradient>
+  <linearGradient id="mongo-zone-grad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#0f1f14"/>
+    <stop offset="100%" stop-color="#0a1810"/>
+  </linearGradient>
+  <linearGradient id="mongo-mem-grad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#1a1030"/>
+    <stop offset="100%" stop-color="#140d26"/>
+  </linearGradient>
 
-  <!-- ── ORCHESTRATOR ────────────────────────────────── -->
-  <g filter="url(#shadow)">
-    <rect x="188" y="195" width="185" height="130" rx="10" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
-  </g>
-  <text x="280" y="218" text-anchor="middle" font-size="11" fill="#6b7280" font-weight="500">Express API · :3000</text>
-  <line x1="200" y1="222" x2="362" y2="222" stroke="#e5e7eb" stroke-width="1"/>
-  <text x="280" y="244" text-anchor="middle" font-size="13" fill="#111827" font-weight="700">🧠 Orchestrator</text>
-  <!-- OpenAI logo mark (simplified "O") -->
-  <circle cx="252" cy="271" r="11" fill="none" stroke="#412991" stroke-width="2"/>
-  <circle cx="252" cy="271" r="5" fill="#412991"/>
-  <text x="267" y="275" font-size="11" fill="#412991" font-weight="600">OpenAI GPT-4o-mini</text>
-  <text x="280" y="298" text-anchor="middle" font-size="11" fill="#6b7280">intent router</text>
-  <!-- LangGraph pill -->
-  <rect x="218" y="306" width="124" height="14" rx="7" fill="#1C3C3C"/>
-  <text x="280" y="317" text-anchor="middle" font-size="9" fill="#ffffff" font-weight="600">⛓ LangGraph.js</text>
+  <!-- Arrow markers -->
+  <marker id="arr-green" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+    <path d="M0,0.5 L0,5.5 L6,3 Z" fill="#22c55e"/>
+  </marker>
+  <marker id="arr-purple" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+    <path d="M0,0.5 L0,5.5 L6,3 Z" fill="#a855f7"/>
+  </marker>
+  <marker id="arr-slate" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+    <path d="M0,0.5 L0,5.5 L6,3 Z" fill="#64748b"/>
+  </marker>
+  <marker id="arr-slate-rev" markerWidth="7" markerHeight="7" refX="1" refY="3" orient="auto-start-reverse">
+    <path d="M0,0.5 L0,5.5 L6,3 Z" fill="#64748b"/>
+  </marker>
+</defs>
 
-  <!-- ── AGENTS GROUP ────────────────────────────────── -->
-  <rect x="430" y="30" width="220" height="460" rx="12" fill="#f0f9ff" stroke="#bae6fd" stroke-width="1.5" stroke-dasharray="6,3"/>
-  <text x="540" y="54" text-anchor="middle" font-size="11" fill="#0369a1" font-weight="600">LangGraph.js Agents · GPT-4o</text>
+<!-- ═══════════════════════════════ BACKGROUND ═══════════════════════════════ -->
+<rect width="1080" height="620" rx="16" fill="url(#bg-grad)"/>
 
-  <!-- Hotels Agent -->
-  <g filter="url(#shadow)">
-    <rect x="448" y="68" width="184" height="110" rx="9" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
-  </g>
-  <text x="540" y="90" text-anchor="middle" font-size="13" fill="#14532d" font-weight="700">🏨 Hotels Agent</text>
-  <line x1="460" y1="96" x2="620" y2="96" stroke="#bbf7d0" stroke-width="1"/>
-  <text x="540" y="113" text-anchor="middle" font-size="10" fill="#166534">search_hotels · get_room_availability</text>
-  <text x="540" y="128" text-anchor="middle" font-size="10" fill="#166534">create_booking · cancel_booking</text>
-  <!-- OpenAI small -->
-  <circle cx="466" cy="153" r="7" fill="none" stroke="#412991" stroke-width="1.5"/>
-  <circle cx="466" cy="153" r="3" fill="#412991"/>
-  <text x="477" y="157" font-size="9" fill="#412991">GPT-4o + tools</text>
-  <!-- LangChain small -->
-  <rect x="555" y="146" width="68" height="13" rx="6" fill="#1C3C3C"/>
-  <text x="589" y="156" text-anchor="middle" font-size="8" fill="#ffffff">⛓ LangGraph.js</text>
+<!-- Subtle grid texture -->
+<pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+  <path d="M40,0 L0,0 L0,40" fill="none" stroke="#ffffff06" stroke-width="1"/>
+</pattern>
+<rect width="1080" height="620" rx="16" fill="url(#grid)"/>
 
-  <!-- Transport Agent -->
-  <g filter="url(#shadow)">
-    <rect x="448" y="198" width="184" height="110" rx="9" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
-  </g>
-  <text x="540" y="220" text-anchor="middle" font-size="13" fill="#1e3a8a" font-weight="700">🚂 Transport Agent</text>
-  <line x1="460" y1="226" x2="620" y2="226" stroke="#bfdbfe" stroke-width="1"/>
-  <text x="540" y="243" text-anchor="middle" font-size="10" fill="#1d4ed8">search_transport · get_routes</text>
-  <text x="540" y="258" text-anchor="middle" font-size="10" fill="#1d4ed8">book_transport · cancel_transport</text>
-  <circle cx="466" cy="283" r="7" fill="none" stroke="#412991" stroke-width="1.5"/>
-  <circle cx="466" cy="283" r="3" fill="#412991"/>
-  <text x="477" y="287" font-size="9" fill="#412991">GPT-4o + tools</text>
-  <rect x="555" y="276" width="68" height="13" rx="6" fill="#1C3C3C"/>
-  <text x="589" y="286" text-anchor="middle" font-size="8" fill="#ffffff">⛓ LangGraph.js</text>
+<!-- ═══════════════════════════════ ZONE: LangGraph Agents ═══════════════════ -->
+<rect x="330" y="30" width="370" height="548" rx="14" fill="url(#agent-zone-grad)" stroke="#2d4a7a" stroke-width="1" opacity="0.9"/>
+<!-- Zone label -->
+<rect x="370" y="19" width="292" height="24" rx="12" fill="#1e3560"/>
+<text x="516" y="34" text-anchor="middle" font-size="11" font-weight="600" fill="#93c5fd" letter-spacing="0.5">LangGraph.js Agents · GPT-4o</text>
 
-  <!-- Policy Agent -->
-  <g filter="url(#shadow)">
-    <rect x="448" y="328" width="184" height="110" rx="9" fill="#fdf4ff" stroke="#a855f7" stroke-width="1.5"/>
-  </g>
-  <text x="540" y="350" text-anchor="middle" font-size="13" fill="#581c87" font-weight="700">📋 Policy Agent</text>
-  <line x1="460" y1="356" x2="620" y2="356" stroke="#e9d5ff" stroke-width="1"/>
-  <text x="540" y="373" text-anchor="middle" font-size="10" fill="#7e22ce">search_policy · get_by_category</text>
-  <text x="540" y="388" text-anchor="middle" font-size="10" fill="#7e22ce">get_cancellation_terms · compliance</text>
-  <circle cx="466" cy="413" r="7" fill="none" stroke="#412991" stroke-width="1.5"/>
-  <circle cx="466" cy="413" r="3" fill="#412991"/>
-  <text x="477" y="417" font-size="9" fill="#412991">GPT-4o + tools</text>
-  <rect x="555" y="406" width="68" height="13" rx="6" fill="#1C3C3C"/>
-  <text x="589" y="416" text-anchor="middle" font-size="8" fill="#ffffff">⛓ LangGraph.js</text>
+<!-- ═══════════════════════════════ ZONE: MongoDB Atlas ══════════════════════ -->
+<rect x="740" y="30" width="312" height="548" rx="14" fill="#0d1a0f" stroke="#166534" stroke-width="1" opacity="0.9"/>
+<!-- Zone label -->
+<g transform="translate(752, 46)">
+  <!-- Mongo leaf icon -->
+  <rect width="18" height="18" rx="4" fill="#00ed64"/>
+  <path d="M9,2.5 Q13,5 13,9 Q13,13 9,15.5 Q5,13 5,9 Q5,5 9,2.5 Z" fill="white"/>
+  <line x1="9" y1="9" x2="9" y2="15.5" stroke="#00ed64" stroke-width="1.2"/>
+</g>
+<text x="776" y="59" font-size="12" font-weight="700" fill="#22c55e">MongoDB Atlas</text>
+<text x="872" y="59" font-size="10" fill="#4b7a57">M10 · AWS eu-west-1</text>
 
-  <!-- ── MONGODB ATLAS GROUP ─────────────────────────── -->
-  <rect x="710" y="80" width="240" height="370" rx="12" fill="#f0fdf4" stroke="#16a34a" stroke-width="2" stroke-dasharray="6,3"/>
-  <!-- MongoDB leaf logo path (simplified) -->
-  <g transform="translate(721,92)">
-    <path d="M9,0 C9,0 15,5 15,12 C15,16 12,19 9,20 C6,19 3,16 3,12 C3,5 9,0 9,0 Z" fill="#16a34a"/>
-    <path d="M9,20 L9,26" stroke="#16a34a" stroke-width="2" fill="none"/>
-  </g>
-  <text x="745" y="104" font-size="12" fill="#14532d" font-weight="700">MongoDB Atlas</text>
-  <text x="830" y="104" font-size="10" fill="#16a34a">M10 · AWS eu-west-1</text>
+<!-- ═══════════════════════════════ USER ════════════════════════════════════ -->
+<rect x="28" y="258" width="80" height="84" rx="12" fill="#1a1f2e" stroke="#2d3748" stroke-width="1" filter="url(#s1)"/>
+<!-- Person SVG icon -->
+<circle cx="68" cy="285" r="12" fill="#334155"/>
+<path d="M46,326 Q46,308 68,308 Q90,308 90,326" fill="#334155"/>
+<text x="68" y="346" text-anchor="middle" font-size="11" font-weight="500" fill="#94a3b8">User</text>
 
-  <!-- holiday_db node -->
-  <g filter="url(#shadow)">
-    <rect x="728" y="118" width="204" height="145" rx="9" fill="#ffffff" stroke="#16a34a" stroke-width="1.5"/>
-  </g>
-  <!-- Cylinder top -->
-  <ellipse cx="830" cy="136" rx="40" ry="9" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
-  <rect x="790" y="136" width="80" height="22" fill="#f0fdf4"/>
-  <ellipse cx="830" cy="158" rx="40" ry="9" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
-  <text x="830" y="155" text-anchor="middle" font-size="10" fill="#14532d" font-weight="700">holiday_db</text>
-  <line x1="740" y1="172" x2="920" y2="172" stroke="#d1fae5" stroke-width="1"/>
-  <text x="830" y="190" text-anchor="middle" font-size="10" fill="#166534">hotels · bookings · travel_policies</text>
-  <rect x="752" y="200" width="156" height="18" rx="9" fill="#16a34a"/>
-  <text x="830" y="213" text-anchor="middle" font-size="9.5" fill="#ffffff" font-weight="700">✨ autoEmbed · voyage-4</text>
-  <text x="830" y="233" text-anchor="middle" font-size="9" fill="#6b7280">Vector Search · no API key needed</text>
-  <text x="830" y="248" text-anchor="middle" font-size="9" fill="#6b7280">hotels_vector_index · policy_vector_index</text>
+<!-- ═══════════════════════════════ ORCHESTRATOR ══════════════════════════════ -->
+<rect x="146" y="220" width="156" height="158" rx="12" fill="url(#orch-grad)" stroke="#2d4a6a" stroke-width="1" filter="url(#s1)"/>
+<text x="224" y="242" text-anchor="middle" font-size="9.5" fill="#475569" letter-spacing="0.3">Express API · :3000</text>
+<!-- Brain icon -->
+<text x="224" y="266" text-anchor="middle" font-size="18">🧠</text>
+<text x="224" y="286" text-anchor="middle" font-size="13" font-weight="600" fill="#e2e8f0">Orchestrator</text>
 
-  <!-- agent_memory node -->
-  <g filter="url(#shadow)">
-    <rect x="728" y="278" width="204" height="155" rx="9" fill="#ffffff" stroke="#a855f7" stroke-width="1.5"/>
-  </g>
-  <ellipse cx="830" cy="296" rx="40" ry="9" fill="#fdf4ff" stroke="#a855f7" stroke-width="1.5"/>
-  <rect x="790" y="296" width="80" height="22" fill="#fdf4ff"/>
-  <ellipse cx="830" cy="318" rx="40" ry="9" fill="#fdf4ff" stroke="#a855f7" stroke-width="1.5"/>
-  <text x="830" y="315" text-anchor="middle" font-size="10" fill="#581c87" font-weight="700">agent_memory</text>
-  <line x1="740" y1="332" x2="920" y2="332" stroke="#f3e8ff" stroke-width="1"/>
-  <text x="830" y="350" text-anchor="middle" font-size="10" fill="#7e22ce">long_term_memory · checkpoints</text>
-  <rect x="752" y="360" width="156" height="18" rx="9" fill="#a855f7"/>
-  <text x="830" y="373" text-anchor="middle" font-size="9.5" fill="#ffffff" font-weight="700">✨ autoEmbed · voyage-4</text>
-  <text x="830" y="393" text-anchor="middle" font-size="9" fill="#6b7280">memory_vector_index</text>
-  <text x="830" y="408" text-anchor="middle" font-size="9" fill="#6b7280">MongoDBStore (long-term)</text>
-  <text x="830" y="422" text-anchor="middle" font-size="9" fill="#6b7280">MongoDBSaver (short-term · 30d TTL)</text>
+<!-- OpenAI pill -->
+<rect x="160" y="295" width="128" height="22" rx="11" fill="#111827" stroke="#1f2937" stroke-width="1"/>
+<!-- OpenAI logo: the actual interlocking-rings simplified shape -->
+<g transform="translate(167,299)">
+  <circle cx="7" cy="7" r="7" fill="white"/>
+  <!-- Simplified OpenAI logo: star/asterisk shape -->
+  <path d="M7,2 L7,12 M2,4.7 L12,9.3 M2,9.3 L12,4.7" stroke="#111827" stroke-width="1.6" stroke-linecap="round"/>
+</g>
+<text x="184" y="310" font-size="9" fill="#e2e8f0" font-weight="500">GPT-4o-mini</text>
 
-  <!-- ── ARROWS ───────────────────────────────────────── -->
-  <!-- User → Orchestrator -->
-  <line x1="138" y1="258" x2="186" y2="258" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <text x="162" y="252" text-anchor="middle" font-size="9" fill="#6b7280">POST /chat</text>
+<!-- LangGraph pill -->
+<rect x="160" y="322" width="128" height="22" rx="11" fill="#111827" stroke="#1f2937" stroke-width="1"/>
+<!-- LangChain logo: stylized chain link -->
+<g transform="translate(167,326)">
+  <rect width="14" height="14" rx="3" fill="#1c64f2"/>
+  <!-- L shape -->
+  <path d="M4,3 L4,11 L10,11" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</g>
+<text x="185" y="337" font-size="9" fill="#94a3b8" font-weight="500">LangGraph.js</text>
 
-  <!-- Orchestrator → Hotels -->
-  <line x1="373" y1="230" x2="446" y2="150" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <!-- Orchestrator → Transport -->
-  <line x1="373" y1="258" x2="446" y2="258" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <!-- Orchestrator → Policy -->
-  <line x1="373" y1="286" x2="446" y2="365" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="224" y="360" text-anchor="middle" font-size="9" fill="#4a5568" font-style="italic">intent router</text>
 
-  <!-- Orchestrator ↔ agent_memory (long-term) -->
-  <path d="M280,195 Q280,90 728,350" fill="none" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-dashed)"/>
-  <text x="400" y="82" text-anchor="middle" font-size="9" fill="#a855f7">long-term memory</text>
+<!-- ═══════════════════════════════ HOTELS AGENT ══════════════════════════════ -->
+<rect x="346" y="56" width="336" height="118" rx="12" fill="#111827" stroke="#1e40af" stroke-width="1" filter="url(#s1)"/>
+<rect x="346" y="56" width="336" height="4" rx="2" fill="#3b82f6"/>
+<text x="366" y="80" font-size="13">🏨</text>
+<text x="388" y="80" font-size="13" font-weight="600" fill="#e2e8f0">Hotels Agent</text>
+<text x="366" y="98" font-size="9.5" fill="#64748b">search_hotels · get_room_availability</text>
+<text x="366" y="112" font-size="9.5" fill="#64748b">create_booking · cancel_booking</text>
+<!-- Pills row -->
+<rect x="366" y="122" width="94" height="20" rx="10" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
+<g transform="translate(373,126)"><circle cx="6" cy="6" r="6" fill="white"/><path d="M6,1 L6,11 M1,3.7 L11,8.3 M1,8.3 L11,3.7" stroke="#0f172a" stroke-width="1.4" stroke-linecap="round"/></g>
+<text x="388" y="136" font-size="8.5" fill="#93c5fd" font-weight="500">GPT-4o + tools</text>
+<rect x="466" y="122" width="100" height="20" rx="10" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
+<g transform="translate(473,126)"><rect width="13" height="13" rx="3" fill="#1c64f2"/><path d="M3.5,2.5 L3.5,10.5 L9.5,10.5" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
+<text x="490" y="136" font-size="8.5" fill="#60a5fa" font-weight="500">LangGraph.js</text>
 
-  <!-- Agents → holiday_db -->
-  <line x1="632" y1="150" x2="726" y2="190" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow-green)"/>
-  <line x1="632" y1="258" x2="726" y2="220" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow-green)"/>
-  <line x1="632" y1="365" x2="726" y2="248" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow-green)"/>
-  <text x="688" y="195" font-size="9" fill="#16a34a">read/write</text>
+<!-- ═══════════════════════════════ TRANSPORT AGENT ═══════════════════════════ -->
+<rect x="346" y="212" width="336" height="118" rx="12" fill="#111827" stroke="#6b21a8" stroke-width="1" filter="url(#s1)"/>
+<rect x="346" y="212" width="336" height="4" rx="2" fill="#a855f7"/>
+<text x="366" y="237" font-size="13">🚉</text>
+<text x="388" y="237" font-size="13" font-weight="600" fill="#e2e8f0">Transport Agent</text>
+<text x="366" y="255" font-size="9.5" fill="#64748b">search_transport · get_routes</text>
+<text x="366" y="269" font-size="9.5" fill="#64748b">book_transport · cancel_transport</text>
+<rect x="366" y="278" width="94" height="20" rx="10" fill="#0f172a" stroke="#3b1a5e" stroke-width="1"/>
+<g transform="translate(373,282)"><circle cx="6" cy="6" r="6" fill="white"/><path d="M6,1 L6,11 M1,3.7 L11,8.3 M1,8.3 L11,3.7" stroke="#0f172a" stroke-width="1.4" stroke-linecap="round"/></g>
+<text x="388" y="292" font-size="8.5" fill="#93c5fd" font-weight="500">GPT-4o + tools</text>
+<rect x="466" y="278" width="100" height="20" rx="10" fill="#0f172a" stroke="#3b1a5e" stroke-width="1"/>
+<g transform="translate(473,282)"><rect width="13" height="13" rx="3" fill="#1c64f2"/><path d="M3.5,2.5 L3.5,10.5 L9.5,10.5" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
+<text x="490" y="292" font-size="8.5" fill="#60a5fa" font-weight="500">LangGraph.js</text>
 
-  <!-- Agents → agent_memory (short-term, dashed) -->
-  <line x1="632" y1="120" x2="726" y2="310" stroke="#a855f7" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow-dashed)"/>
-  <line x1="632" y1="280" x2="726" y2="340" stroke="#a855f7" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow-dashed)"/>
-  <line x1="632" y1="400" x2="726" y2="390" stroke="#a855f7" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow-dashed)"/>
-  <text x="695" y="305" font-size="9" fill="#a855f7">short-term</text>
+<!-- ═══════════════════════════════ POLICY AGENT ══════════════════════════════ -->
+<rect x="346" y="370" width="336" height="118" rx="12" fill="#111827" stroke="#4a1d6b" stroke-width="1" filter="url(#s1)"/>
+<rect x="346" y="370" width="336" height="4" rx="2" fill="#7c3aed"/>
+<text x="366" y="394" font-size="13">📋</text>
+<text x="388" y="394" font-size="13" font-weight="600" fill="#e2e8f0">Policy Agent</text>
+<text x="366" y="412" font-size="9.5" fill="#64748b">search_policy · get_by_category</text>
+<text x="366" y="426" font-size="9.5" fill="#64748b">get_cancellation_terms · compliance</text>
+<rect x="366" y="436" width="94" height="20" rx="10" fill="#0f172a" stroke="#2d1545" stroke-width="1"/>
+<g transform="translate(373,440)"><circle cx="6" cy="6" r="6" fill="white"/><path d="M6,1 L6,11 M1,3.7 L11,8.3 M1,8.3 L11,3.7" stroke="#0f172a" stroke-width="1.4" stroke-linecap="round"/></g>
+<text x="388" y="450" font-size="8.5" fill="#93c5fd" font-weight="500">GPT-4o + tools</text>
+<rect x="466" y="436" width="100" height="20" rx="10" fill="#0f172a" stroke="#2d1545" stroke-width="1"/>
+<g transform="translate(473,440)"><rect width="13" height="13" rx="3" fill="#1c64f2"/><path d="M3.5,2.5 L3.5,10.5 L9.5,10.5" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
+<text x="490" y="450" font-size="8.5" fill="#60a5fa" font-weight="500">LangGraph.js</text>
 
-  <!-- Orchestrator ← response back to user (below) -->
-  <line x1="186" y1="272" x2="138" y2="272" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <text x="162" y="284" text-anchor="middle" font-size="9" fill="#6b7280">response</text>
+<!-- ═══════════════════════════════ holiday_db ════════════════════════════════ -->
+<rect x="756" y="74" width="276" height="214" rx="12" fill="#0d1f12" stroke="#166534" stroke-width="1" filter="url(#s1)"/>
+<rect x="756" y="74" width="276" height="4" rx="2" fill="#22c55e"/>
 
-  <!-- ── LEGEND ─────────────────────────────────────────── -->
-  <rect x="28" y="460" width="370" height="60" rx="8" fill="#ffffff" stroke="#e5e7eb" stroke-width="1"/>
-  <text x="44" y="478" font-size="10" fill="#374151" font-weight="600">Legend</text>
-  <line x1="44" y1="490" x2="80" y2="490" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <text x="86" y="494" font-size="9" fill="#374151">primary data flow</text>
-  <line x1="180" y1="490" x2="216" y2="490" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow-dashed)"/>
-  <text x="222" y="494" font-size="9" fill="#374151">memory (vector search)</text>
-  <rect x="44" y="500" width="10" height="10" rx="2" fill="#f0fdf4" stroke="#16a34a" stroke-width="1"/>
-  <text x="58" y="509" font-size="9" fill="#374151">Hotels</text>
-  <rect x="100" y="500" width="10" height="10" rx="2" fill="#eff6ff" stroke="#3b82f6" stroke-width="1"/>
-  <text x="114" y="509" font-size="9" fill="#374151">Transport</text>
-  <rect x="165" y="500" width="10" height="10" rx="2" fill="#fdf4ff" stroke="#a855f7" stroke-width="1"/>
-  <text x="179" y="509" font-size="9" fill="#374151">Policy</text>
-  <rect x="220" y="500" width="10" height="10" rx="2" fill="#1C3C3C"/>
-  <text x="234" y="509" font-size="9" fill="#374151">LangChain / LangGraph.js</text>
+<!-- DB cylinder icon -->
+<g transform="translate(766,88)">
+  <ellipse cx="18" cy="7" rx="18" ry="5" fill="#14532d" stroke="#166534" stroke-width="1"/>
+  <rect x="0" y="7" width="36" height="20" fill="#14532d" stroke="#166534" stroke-width="1" stroke-top="none"/>
+  <ellipse cx="18" cy="27" rx="18" ry="5" fill="#14532d" stroke="#166534" stroke-width="1"/>
+  <ellipse cx="18" cy="7" rx="18" ry="5" fill="#166534"/>
+</g>
+<text x="814" y="102" font-size="12" font-weight="700" fill="#4ade80">holiday_db</text>
+
+<text x="766" y="126" font-size="9.5" fill="#4b7a57">hotels · bookings · travel_policies</text>
+<line x1="766" y1="133" x2="1020" y2="133" stroke="#166534" stroke-width="0.5" opacity="0.5"/>
+
+<text x="766" y="150" font-size="9" fill="#6b7280">Vector Search · no API key needed</text>
+<text x="766" y="165" font-size="9" fill="#6b7280" font-family="monospace">hotels_vector_index</text>
+<text x="766" y="179" font-size="9" fill="#6b7280" font-family="monospace">policy_vector_index</text>
+
+<!-- autoEmbed badge -->
+<rect x="766" y="188" width="132" height="22" rx="11" fill="#14532d" stroke="#166534" stroke-width="1"/>
+<text x="771" y="202" font-size="8.5" fill="#4ade80" font-weight="600">✦ autoEmbed · voyage-4</text>
+<text x="766" y="276" font-size="9" fill="#6b7280">Vector Search · no API key needed</text>
+
+<!-- ═══════════════════════════════ agent_memory ══════════════════════════════ -->
+<rect x="756" y="318" width="276" height="230" rx="12" fill="#130d22" stroke="#5b21b6" stroke-width="1" filter="url(#s1)"/>
+<rect x="756" y="318" width="276" height="4" rx="2" fill="#a855f7"/>
+
+<!-- Memory cylinder icon -->
+<g transform="translate(766,332)">
+  <ellipse cx="18" cy="7" rx="18" ry="5" fill="#2e1065" stroke="#5b21b6" stroke-width="1"/>
+  <rect x="0" y="7" width="36" height="20" fill="#2e1065" stroke="#5b21b6" stroke-width="1"/>
+  <ellipse cx="18" cy="27" rx="18" ry="5" fill="#2e1065" stroke="#5b21b6" stroke-width="1"/>
+  <ellipse cx="18" cy="7" rx="18" ry="5" fill="#4c1d95"/>
+</g>
+<text x="814" y="346" font-size="12" font-weight="700" fill="#c084fc">agent_memory</text>
+
+<text x="766" y="371" font-size="9.5" fill="#7c5fb5">long_term_memory · checkpoints</text>
+<line x1="766" y1="378" x2="1020" y2="378" stroke="#5b21b6" stroke-width="0.5" opacity="0.5"/>
+
+<text x="766" y="396" font-size="9" fill="#6b7280" font-family="monospace">memory_vector_index</text>
+<text x="766" y="411" font-size="9" fill="#6b7280" font-family="monospace">MongoDBStore (long-term)</text>
+<text x="766" y="426" font-size="9" fill="#6b7280" font-family="monospace">MongoDBSaver (short-term · 30d TTL)</text>
+
+<!-- autoEmbed purple badge -->
+<rect x="766" y="435" width="132" height="22" rx="11" fill="#2e1065" stroke="#5b21b6" stroke-width="1"/>
+<text x="771" y="449" font-size="8.5" fill="#c084fc" font-weight="600">✦ autoEmbed · voyage-4</text>
+
+<!-- ═══════════════════════════════ CONNECTION LINES ══════════════════════════ -->
+<!-- Draw ALL arrows AFTER all boxes so they appear on top cleanly -->
+
+<!-- 1. User ↔ Orchestrator -->
+<line x1="108" y1="299" x2="146" y2="299" stroke="#475569" stroke-width="1.5"
+  marker-end="url(#arr-slate)" marker-start="url(#arr-slate-rev)"/>
+<text x="127" y="291" text-anchor="middle" font-size="8" fill="#475569">POST /chat</text>
+<text x="127" y="311" text-anchor="middle" font-size="8" fill="#475569">response</text>
+
+<!-- 2. Orchestrator → Hotels (elbow: right then up to y=115) -->
+<path d="M302,272 L317,272 L317,115 L346,115" fill="none" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+<!-- 3. Orchestrator → Transport (straight right) -->
+<line x1="302" y1="299" x2="346" y2="271" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+<!-- 4. Orchestrator → Policy (elbow: right then down to y=429) -->
+<path d="M302,318 L317,318 L317,429 L346,429" fill="none" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+<!-- 5. Hotels → holiday_db (straight right) -->
+<line x1="682" y1="115" x2="756" y2="155" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+<!-- 6. Transport → holiday_db (elbow going up cleanly) -->
+<path d="M682,271 L720,271 L720,200 L756,200" fill="none" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+<!-- 7. Policy → holiday_db (elbow right then up) -->
+<path d="M682,429 L726,429 L726,240 L756,240" fill="none" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+<!-- read/write label -->
+<text x="722" y="155" font-size="8.5" fill="#22c55e" font-weight="500">read / write</text>
+
+<!-- ─── MEMORY ARROWS ─── routed entirely outside the agent zone ───────────── -->
+
+<!-- 8. Long-term memory: Orchestrator → agent_memory
+     Route: UP from orchestrator top → along top rail (y=14) → down into agent_memory top
+     This stays completely ABOVE everything -->
+<path d="M224,220 L224,14 L894,14 L894,318" fill="none"
+  stroke="#a855f7" stroke-width="1.5" stroke-dasharray="5,3"
+  marker-end="url(#arr-purple)"/>
+<!-- Label on top rail -->
+<rect x="474" y="5" width="124" height="16" rx="8" fill="#1e0a3c"/>
+<text x="536" y="16" text-anchor="middle" font-size="8.5" fill="#a855f7" font-weight="600">long-term memory</text>
+
+<!-- 9. short-term memory: Agents → agent_memory
+     Route: from right edge of agent zone (x=716) → straight right, bridged between the two DBs -->
+<path d="M716,300 L730,300 L730,433 L756,433" fill="none"
+  stroke="#a855f7" stroke-width="1.5" stroke-dasharray="5,3"
+  marker-end="url(#arr-purple)"/>
+<rect x="700" y="304" width="56" height="14" rx="7" fill="#1e0a3c"/>
+<text x="728" y="314" text-anchor="middle" font-size="8" fill="#a855f7" font-weight="500">short-term</text>
+
+<!-- ═══════════════════════════════ LEGEND ════════════════════════════════════ -->
+<rect x="28" y="510" width="684" height="88" rx="12" fill="#0f1117" stroke="#1e293b" stroke-width="1"/>
+<text x="48" y="530" font-size="10" font-weight="600" fill="#475569" letter-spacing="0.5">LEGEND</text>
+
+<!-- Primary flow -->
+<line x1="48" y1="549" x2="78" y2="549" stroke="#22c55e" stroke-width="2" marker-end="url(#arr-green)"/>
+<text x="84" y="553" font-size="9.5" fill="#64748b">primary data flow</text>
+
+<!-- Memory flow -->
+<line x1="48" y1="572" x2="78" y2="572" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-purple)"/>
+<text x="84" y="576" font-size="9.5" fill="#64748b">memory (vector search)</text>
+
+<!-- Hotels color -->
+<rect x="210" y="540" width="10" height="10" rx="3" fill="#1e40af"/>
+<rect x="210" y="540" width="10" height="3" rx="1.5" fill="#3b82f6"/>
+<text x="225" y="549" font-size="9.5" fill="#64748b">Hotels</text>
+
+<!-- Transport color -->
+<rect x="278" y="540" width="10" height="10" rx="3" fill="#6b21a8"/>
+<rect x="278" y="540" width="10" height="3" rx="1.5" fill="#a855f7"/>
+<text x="293" y="549" font-size="9.5" fill="#64748b">Transport</text>
+
+<!-- Policy color -->
+<rect x="362" y="540" width="10" height="10" rx="3" fill="#4a1d6b"/>
+<rect x="362" y="540" width="10" height="3" rx="1.5" fill="#7c3aed"/>
+<text x="377" y="549" font-size="9.5" fill="#64748b">Policy</text>
+
+<!-- OpenAI logo in legend -->
+<g transform="translate(210,561)"><circle cx="7" cy="7" r="7" fill="white"/><path d="M7,2 L7,12 M2,4.7 L12,9.3 M2,9.3 L12,4.7" stroke="#111827" stroke-width="1.4" stroke-linecap="round"/></g>
+<text x="223" y="572" font-size="9.5" fill="#64748b">OpenAI</text>
+
+<!-- LangGraph logo in legend -->
+<g transform="translate(270,561)"><rect width="14" height="14" rx="3" fill="#1c64f2"/><path d="M3.5,2.5 L3.5,11 L10,11" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
+<text x="289" y="572" font-size="9.5" fill="#64748b">LangGraph.js</text>
+
+<!-- MongoDB legend -->
+<g transform="translate(354,561)"><rect width="14" height="14" rx="3" fill="#00ed64"/><path d="M7,1.5 Q11,4 11,7 Q11,10 7,12.5 Q3,10 3,7 Q3,4 7,1.5 Z" fill="white"/><line x1="7" y1="7" x2="7" y2="12.5" stroke="#00ed64" stroke-width="1.2"/></g>
+<text x="373" y="572" font-size="9.5" fill="#64748b">MongoDB Atlas</text>
+
 </svg>
