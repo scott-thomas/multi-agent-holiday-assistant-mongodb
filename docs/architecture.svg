@@ -1,298 +1,325 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 620" width="1080" height="620" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 640" width="1100" height="640"
+     font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+
 <defs>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
-    text { font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif; }
-  </style>
-
-  <!-- Shadows -->
-  <filter id="s1" x="-8%" y="-8%" width="116%" height="130%">
-    <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#00000022"/>
-    <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#00000014"/>
+  <!-- Subtle card shadow -->
+  <filter id="card" x="-6%" y="-6%" width="112%" height="124%">
+    <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#00000010"/>
+    <feDropShadow dx="0" dy="3" stdDeviation="6"   flood-color="#0000000a"/>
   </filter>
-  <filter id="s2" x="-4%" y="-4%" width="108%" height="118%">
-    <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#00000030"/>
+  <filter id="zone" x="-3%" y="-3%" width="106%" height="110%">
+    <feDropShadow dx="0" dy="2" stdDeviation="8" flood-color="#0000000a"/>
   </filter>
-
-  <!-- Gradients -->
-  <linearGradient id="bg-grad" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0%" stop-color="#0f1117"/>
-    <stop offset="100%" stop-color="#141820"/>
-  </linearGradient>
-  <linearGradient id="orch-grad" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#1e2230"/>
-    <stop offset="100%" stop-color="#181c28"/>
-  </linearGradient>
-  <linearGradient id="agent-zone-grad" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#1a2235"/>
-    <stop offset="100%" stop-color="#141c2e"/>
-  </linearGradient>
-  <linearGradient id="mongo-zone-grad" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#0f1f14"/>
-    <stop offset="100%" stop-color="#0a1810"/>
-  </linearGradient>
-  <linearGradient id="mongo-mem-grad" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#1a1030"/>
-    <stop offset="100%" stop-color="#140d26"/>
-  </linearGradient>
 
   <!-- Arrow markers -->
-  <marker id="arr-green" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
-    <path d="M0,0.5 L0,5.5 L6,3 Z" fill="#22c55e"/>
+  <marker id="ag" markerWidth="8" markerHeight="8" refX="6" refY="3.5" orient="auto">
+    <path d="M0,1 L0,6 L7,3.5 Z" fill="#16a34a"/>
   </marker>
-  <marker id="arr-purple" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
-    <path d="M0,0.5 L0,5.5 L6,3 Z" fill="#a855f7"/>
+  <marker id="ap" markerWidth="8" markerHeight="8" refX="6" refY="3.5" orient="auto">
+    <path d="M0,1 L0,6 L7,3.5 Z" fill="#8b5cf6"/>
   </marker>
-  <marker id="arr-slate" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
-    <path d="M0,0.5 L0,5.5 L6,3 Z" fill="#64748b"/>
+  <marker id="as" markerWidth="8" markerHeight="8" refX="6" refY="3.5" orient="auto">
+    <path d="M0,1 L0,6 L7,3.5 Z" fill="#94a3b8"/>
   </marker>
-  <marker id="arr-slate-rev" markerWidth="7" markerHeight="7" refX="1" refY="3" orient="auto-start-reverse">
-    <path d="M0,0.5 L0,5.5 L6,3 Z" fill="#64748b"/>
+  <marker id="asr" markerWidth="8" markerHeight="8" refX="1" refY="3.5" orient="auto-start-reverse">
+    <path d="M7,1 L7,6 L0,3.5 Z" fill="#94a3b8"/>
   </marker>
+
+  <!-- Clip for rounded pill icon -->
+  <clipPath id="pill-clip"><rect width="20" height="20" rx="4"/></clipPath>
 </defs>
 
-<!-- ═══════════════════════════════ BACKGROUND ═══════════════════════════════ -->
-<rect width="1080" height="620" rx="16" fill="url(#bg-grad)"/>
+<!-- ═══ BACKGROUND ═══ -->
+<rect width="1100" height="640" rx="18" fill="#f8fafc"/>
 
-<!-- Subtle grid texture -->
-<pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-  <path d="M40,0 L0,0 L0,40" fill="none" stroke="#ffffff06" stroke-width="1"/>
+<!-- Faint dot grid -->
+<pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+  <circle cx="12" cy="12" r="0.9" fill="#cbd5e1" opacity="0.6"/>
 </pattern>
-<rect width="1080" height="620" rx="16" fill="url(#grid)"/>
+<rect width="1100" height="640" rx="18" fill="url(#dots)"/>
 
-<!-- ═══════════════════════════════ ZONE: LangGraph Agents ═══════════════════ -->
-<rect x="330" y="30" width="370" height="548" rx="14" fill="url(#agent-zone-grad)" stroke="#2d4a7a" stroke-width="1" opacity="0.9"/>
-<!-- Zone label -->
-<rect x="370" y="19" width="292" height="24" rx="12" fill="#1e3560"/>
-<text x="516" y="34" text-anchor="middle" font-size="11" font-weight="600" fill="#93c5fd" letter-spacing="0.5">LangGraph.js Agents · GPT-4o</text>
+<!-- ═══ ZONE: LangGraph Agents ═══ -->
+<rect x="334" y="36" width="358" height="556" rx="14"
+  fill="white" stroke="#e0e7ff" stroke-width="1.5" filter="url(#zone)"/>
+<!-- Zone header pill -->
+<rect x="384" y="24" width="260" height="26" rx="13"
+  fill="#eef2ff" stroke="#c7d2fe" stroke-width="1"/>
+<text x="514" y="41" text-anchor="middle" font-size="11" font-weight="600"
+  fill="#4338ca" letter-spacing="0.3">LangGraph.js Agents · GPT-4o</text>
 
-<!-- ═══════════════════════════════ ZONE: MongoDB Atlas ══════════════════════ -->
-<rect x="740" y="30" width="312" height="548" rx="14" fill="#0d1a0f" stroke="#166534" stroke-width="1" opacity="0.9"/>
-<!-- Zone label -->
-<g transform="translate(752, 46)">
-  <!-- Mongo leaf icon -->
-  <rect width="18" height="18" rx="4" fill="#00ed64"/>
-  <path d="M9,2.5 Q13,5 13,9 Q13,13 9,15.5 Q5,13 5,9 Q5,5 9,2.5 Z" fill="white"/>
-  <line x1="9" y1="9" x2="9" y2="15.5" stroke="#00ed64" stroke-width="1.2"/>
+<!-- ═══ ZONE: MongoDB Atlas ═══ -->
+<rect x="736" y="36" width="328" height="556" rx="14"
+  fill="white" stroke="#dcfce7" stroke-width="1.5" filter="url(#zone)"/>
+<!-- Zone header -->
+<g transform="translate(752, 54)">
+  <!-- Mongo icon -->
+  <rect width="20" height="20" rx="5" fill="#00ed64"/>
+  <path d="M10,2.5 Q15,5.5 15,10 Q15,14.5 10,17 Q5,14.5 5,10 Q5,5.5 10,2.5Z" fill="white"/>
+  <line x1="10" y1="10" x2="10" y2="17" stroke="#00ed64" stroke-width="1.3"/>
 </g>
-<text x="776" y="59" font-size="12" font-weight="700" fill="#22c55e">MongoDB Atlas</text>
-<text x="872" y="59" font-size="10" fill="#4b7a57">M10 · AWS eu-west-1</text>
+<text x="780" y="68" font-size="12" font-weight="700" fill="#15803d">MongoDB Atlas</text>
+<text x="880" y="68" font-size="10" fill="#86a88f">M10 · AWS eu-west-1</text>
 
-<!-- ═══════════════════════════════ USER ════════════════════════════════════ -->
-<rect x="28" y="258" width="80" height="84" rx="12" fill="#1a1f2e" stroke="#2d3748" stroke-width="1" filter="url(#s1)"/>
-<!-- Person SVG icon -->
-<circle cx="68" cy="285" r="12" fill="#334155"/>
-<path d="M46,326 Q46,308 68,308 Q90,308 90,326" fill="#334155"/>
-<text x="68" y="346" text-anchor="middle" font-size="11" font-weight="500" fill="#94a3b8">User</text>
+<!-- ═══ USER BOX ═══ -->
+<rect x="24" y="262" width="86" height="96" rx="12"
+  fill="white" stroke="#e2e8f0" stroke-width="1.5" filter="url(#card)"/>
+<!-- Person icon -->
+<circle cx="67" cy="290" r="13" fill="#f1f5f9"/>
+<path d="M45,342 Q45,322 67,322 Q89,322 89,342" fill="#f1f5f9" clip-path="inset(0 0 10px 0)"/>
+<path d="M45,335 Q45,316 67,316 Q89,316 89,335" fill="#e2e8f0"/>
+<text x="67" y="352" text-anchor="middle" font-size="11" font-weight="500" fill="#64748b">User</text>
 
-<!-- ═══════════════════════════════ ORCHESTRATOR ══════════════════════════════ -->
-<rect x="146" y="220" width="156" height="158" rx="12" fill="url(#orch-grad)" stroke="#2d4a6a" stroke-width="1" filter="url(#s1)"/>
-<text x="224" y="242" text-anchor="middle" font-size="9.5" fill="#475569" letter-spacing="0.3">Express API · :3000</text>
-<!-- Brain icon -->
-<text x="224" y="266" text-anchor="middle" font-size="18">🧠</text>
-<text x="224" y="286" text-anchor="middle" font-size="13" font-weight="600" fill="#e2e8f0">Orchestrator</text>
+<!-- ═══ ORCHESTRATOR ═══ -->
+<rect x="146" y="224" width="160" height="172" rx="12"
+  fill="white" stroke="#e2e8f0" stroke-width="1.5" filter="url(#card)"/>
+<text x="226" y="247" text-anchor="middle" font-size="9.5" fill="#94a3b8" letter-spacing="0.2">Express API · :3000</text>
+<text x="226" y="272" text-anchor="middle" font-size="20">🧠</text>
+<text x="226" y="292" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">Orchestrator</text>
 
 <!-- OpenAI pill -->
-<rect x="160" y="295" width="128" height="22" rx="11" fill="#111827" stroke="#1f2937" stroke-width="1"/>
-<!-- OpenAI logo: the actual interlocking-rings simplified shape -->
-<g transform="translate(167,299)">
+<rect x="160" y="302" width="132" height="24" rx="12" fill="#0a0a0a"/>
+<g transform="translate(168,307)">
+  <!-- OpenAI mark: white circle with asterisk -->
   <circle cx="7" cy="7" r="7" fill="white"/>
-  <!-- Simplified OpenAI logo: star/asterisk shape -->
-  <path d="M7,2 L7,12 M2,4.7 L12,9.3 M2,9.3 L12,4.7" stroke="#111827" stroke-width="1.6" stroke-linecap="round"/>
+  <g stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round">
+    <line x1="7" y1="2.5" x2="7" y2="11.5"/>
+    <line x1="2.5" y1="5" x2="11.5" y2="9"/>
+    <line x1="2.5" y1="9" x2="11.5" y2="5"/>
+  </g>
 </g>
-<text x="184" y="310" font-size="9" fill="#e2e8f0" font-weight="500">GPT-4o-mini</text>
+<text x="186" y="318" font-size="9" fill="white" font-weight="500">GPT-4o-mini</text>
 
 <!-- LangGraph pill -->
-<rect x="160" y="322" width="128" height="22" rx="11" fill="#111827" stroke="#1f2937" stroke-width="1"/>
-<!-- LangChain logo: stylized chain link -->
-<g transform="translate(167,326)">
-  <rect width="14" height="14" rx="3" fill="#1c64f2"/>
-  <!-- L shape -->
-  <path d="M4,3 L4,11 L10,11" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<rect x="160" y="332" width="132" height="24" rx="12" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<g transform="translate(168,337)">
+  <rect width="14" height="14" rx="3" fill="#1d4ed8"/>
+  <path d="M3.5,3 L3.5,11 L10.5,11" stroke="white" stroke-width="1.8"
+    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </g>
-<text x="185" y="337" font-size="9" fill="#94a3b8" font-weight="500">LangGraph.js</text>
+<text x="186" y="348" font-size="9" fill="#334155" font-weight="500">LangGraph.js</text>
 
-<text x="224" y="360" text-anchor="middle" font-size="9" fill="#4a5568" font-style="italic">intent router</text>
+<text x="226" y="384" text-anchor="middle" font-size="9" fill="#94a3b8" font-style="italic">intent router</text>
 
-<!-- ═══════════════════════════════ HOTELS AGENT ══════════════════════════════ -->
-<rect x="346" y="56" width="336" height="118" rx="12" fill="#111827" stroke="#1e40af" stroke-width="1" filter="url(#s1)"/>
-<rect x="346" y="56" width="336" height="4" rx="2" fill="#3b82f6"/>
-<text x="366" y="80" font-size="13">🏨</text>
-<text x="388" y="80" font-size="13" font-weight="600" fill="#e2e8f0">Hotels Agent</text>
-<text x="366" y="98" font-size="9.5" fill="#64748b">search_hotels · get_room_availability</text>
-<text x="366" y="112" font-size="9.5" fill="#64748b">create_booking · cancel_booking</text>
-<!-- Pills row -->
-<rect x="366" y="122" width="94" height="20" rx="10" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
-<g transform="translate(373,126)"><circle cx="6" cy="6" r="6" fill="white"/><path d="M6,1 L6,11 M1,3.7 L11,8.3 M1,8.3 L11,3.7" stroke="#0f172a" stroke-width="1.4" stroke-linecap="round"/></g>
-<text x="388" y="136" font-size="8.5" fill="#93c5fd" font-weight="500">GPT-4o + tools</text>
-<rect x="466" y="122" width="100" height="20" rx="10" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
-<g transform="translate(473,126)"><rect width="13" height="13" rx="3" fill="#1c64f2"/><path d="M3.5,2.5 L3.5,10.5 L9.5,10.5" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
-<text x="490" y="136" font-size="8.5" fill="#60a5fa" font-weight="500">LangGraph.js</text>
+<!-- ═══ HOTELS AGENT ═══ -->
+<rect x="350" y="60" width="326" height="126" rx="12"
+  fill="white" stroke="#bfdbfe" stroke-width="1.5" filter="url(#card)"/>
+<rect x="350" y="60" width="326" height="3" rx="1.5" fill="#3b82f6"/>
+<text x="370" y="84" font-size="14">🏨</text>
+<text x="394" y="84" font-size="13" font-weight="600" fill="#0f172a">Hotels Agent</text>
+<text x="370" y="102" font-size="9.5" fill="#94a3b8">search_hotels · get_room_availability</text>
+<text x="370" y="116" font-size="9.5" fill="#94a3b8">create_booking · cancel_booking</text>
+<!-- Pills -->
+<rect x="370" y="126" width="100" height="22" rx="11" fill="#0a0a0a"/>
+<g transform="translate(378,130)"><circle cx="7" cy="7" r="7" fill="white"/>
+<g stroke="#0a0a0a" stroke-width="1.4" stroke-linecap="round">
+  <line x1="7" y1="2.5" x2="7" y2="11.5"/><line x1="2.5" y1="5" x2="11.5" y2="9"/>
+  <line x1="2.5" y1="9" x2="11.5" y2="5"/>
+</g></g>
+<text x="395" y="141" font-size="8.5" fill="white" font-weight="500">GPT-4o + tools</text>
+<rect x="478" y="126" width="108" height="22" rx="11" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1"/>
+<g transform="translate(486,130)"><rect width="14" height="14" rx="3" fill="#1d4ed8"/>
+<path d="M3.5,3 L3.5,11 L10.5,11" stroke="white" stroke-width="1.8"
+  stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
+<text x="504" y="141" font-size="8.5" fill="#1d4ed8" font-weight="500">LangGraph.js</text>
 
-<!-- ═══════════════════════════════ TRANSPORT AGENT ═══════════════════════════ -->
-<rect x="346" y="212" width="336" height="118" rx="12" fill="#111827" stroke="#6b21a8" stroke-width="1" filter="url(#s1)"/>
-<rect x="346" y="212" width="336" height="4" rx="2" fill="#a855f7"/>
-<text x="366" y="237" font-size="13">🚉</text>
-<text x="388" y="237" font-size="13" font-weight="600" fill="#e2e8f0">Transport Agent</text>
-<text x="366" y="255" font-size="9.5" fill="#64748b">search_transport · get_routes</text>
-<text x="366" y="269" font-size="9.5" fill="#64748b">book_transport · cancel_transport</text>
-<rect x="366" y="278" width="94" height="20" rx="10" fill="#0f172a" stroke="#3b1a5e" stroke-width="1"/>
-<g transform="translate(373,282)"><circle cx="6" cy="6" r="6" fill="white"/><path d="M6,1 L6,11 M1,3.7 L11,8.3 M1,8.3 L11,3.7" stroke="#0f172a" stroke-width="1.4" stroke-linecap="round"/></g>
-<text x="388" y="292" font-size="8.5" fill="#93c5fd" font-weight="500">GPT-4o + tools</text>
-<rect x="466" y="278" width="100" height="20" rx="10" fill="#0f172a" stroke="#3b1a5e" stroke-width="1"/>
-<g transform="translate(473,282)"><rect width="13" height="13" rx="3" fill="#1c64f2"/><path d="M3.5,2.5 L3.5,10.5 L9.5,10.5" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
-<text x="490" y="292" font-size="8.5" fill="#60a5fa" font-weight="500">LangGraph.js</text>
+<!-- ═══ TRANSPORT AGENT ═══ -->
+<rect x="350" y="224" width="326" height="126" rx="12"
+  fill="white" stroke="#ddd6fe" stroke-width="1.5" filter="url(#card)"/>
+<rect x="350" y="224" width="326" height="3" rx="1.5" fill="#8b5cf6"/>
+<text x="370" y="248" font-size="14">🚉</text>
+<text x="394" y="248" font-size="13" font-weight="600" fill="#0f172a">Transport Agent</text>
+<text x="370" y="266" font-size="9.5" fill="#94a3b8">search_transport · get_routes</text>
+<text x="370" y="280" font-size="9.5" fill="#94a3b8">book_transport · cancel_transport</text>
+<rect x="370" y="290" width="100" height="22" rx="11" fill="#0a0a0a"/>
+<g transform="translate(378,294)"><circle cx="7" cy="7" r="7" fill="white"/>
+<g stroke="#0a0a0a" stroke-width="1.4" stroke-linecap="round">
+  <line x1="7" y1="2.5" x2="7" y2="11.5"/><line x1="2.5" y1="5" x2="11.5" y2="9"/>
+  <line x1="2.5" y1="9" x2="11.5" y2="5"/>
+</g></g>
+<text x="395" y="305" font-size="8.5" fill="white" font-weight="500">GPT-4o + tools</text>
+<rect x="478" y="290" width="108" height="22" rx="11" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="1"/>
+<g transform="translate(486,294)"><rect width="14" height="14" rx="3" fill="#1d4ed8"/>
+<path d="M3.5,3 L3.5,11 L10.5,11" stroke="white" stroke-width="1.8"
+  stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
+<text x="504" y="305" font-size="8.5" fill="#6d28d9" font-weight="500">LangGraph.js</text>
 
-<!-- ═══════════════════════════════ POLICY AGENT ══════════════════════════════ -->
-<rect x="346" y="370" width="336" height="118" rx="12" fill="#111827" stroke="#4a1d6b" stroke-width="1" filter="url(#s1)"/>
-<rect x="346" y="370" width="336" height="4" rx="2" fill="#7c3aed"/>
-<text x="366" y="394" font-size="13">📋</text>
-<text x="388" y="394" font-size="13" font-weight="600" fill="#e2e8f0">Policy Agent</text>
-<text x="366" y="412" font-size="9.5" fill="#64748b">search_policy · get_by_category</text>
-<text x="366" y="426" font-size="9.5" fill="#64748b">get_cancellation_terms · compliance</text>
-<rect x="366" y="436" width="94" height="20" rx="10" fill="#0f172a" stroke="#2d1545" stroke-width="1"/>
-<g transform="translate(373,440)"><circle cx="6" cy="6" r="6" fill="white"/><path d="M6,1 L6,11 M1,3.7 L11,8.3 M1,8.3 L11,3.7" stroke="#0f172a" stroke-width="1.4" stroke-linecap="round"/></g>
-<text x="388" y="450" font-size="8.5" fill="#93c5fd" font-weight="500">GPT-4o + tools</text>
-<rect x="466" y="436" width="100" height="20" rx="10" fill="#0f172a" stroke="#2d1545" stroke-width="1"/>
-<g transform="translate(473,440)"><rect width="13" height="13" rx="3" fill="#1c64f2"/><path d="M3.5,2.5 L3.5,10.5 L9.5,10.5" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
-<text x="490" y="450" font-size="8.5" fill="#60a5fa" font-weight="500">LangGraph.js</text>
+<!-- ═══ POLICY AGENT ═══ -->
+<rect x="350" y="388" width="326" height="126" rx="12"
+  fill="white" stroke="#e9d5ff" stroke-width="1.5" filter="url(#card)"/>
+<rect x="350" y="388" width="326" height="3" rx="1.5" fill="#a855f7"/>
+<text x="370" y="412" font-size="14">📋</text>
+<text x="394" y="412" font-size="13" font-weight="600" fill="#0f172a">Policy Agent</text>
+<text x="370" y="430" font-size="9.5" fill="#94a3b8">search_policy · get_by_category</text>
+<text x="370" y="444" font-size="9.5" fill="#94a3b8">get_cancellation_terms · compliance</text>
+<rect x="370" y="454" width="100" height="22" rx="11" fill="#0a0a0a"/>
+<g transform="translate(378,458)"><circle cx="7" cy="7" r="7" fill="white"/>
+<g stroke="#0a0a0a" stroke-width="1.4" stroke-linecap="round">
+  <line x1="7" y1="2.5" x2="7" y2="11.5"/><line x1="2.5" y1="5" x2="11.5" y2="9"/>
+  <line x1="2.5" y1="9" x2="11.5" y2="5"/>
+</g></g>
+<text x="395" y="469" font-size="8.5" fill="white" font-weight="500">GPT-4o + tools</text>
+<rect x="478" y="454" width="108" height="22" rx="11" fill="#faf5ff" stroke="#e9d5ff" stroke-width="1"/>
+<g transform="translate(486,458)"><rect width="14" height="14" rx="3" fill="#1d4ed8"/>
+<path d="M3.5,3 L3.5,11 L10.5,11" stroke="white" stroke-width="1.8"
+  stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
+<text x="504" y="469" font-size="8.5" fill="#7e22ce" font-weight="500">LangGraph.js</text>
 
-<!-- ═══════════════════════════════ holiday_db ════════════════════════════════ -->
-<rect x="756" y="74" width="276" height="214" rx="12" fill="#0d1f12" stroke="#166534" stroke-width="1" filter="url(#s1)"/>
-<rect x="756" y="74" width="276" height="4" rx="2" fill="#22c55e"/>
+<!-- ═══ holiday_db ═══ -->
+<rect x="752" y="74" width="290" height="228" rx="12"
+  fill="white" stroke="#bbf7d0" stroke-width="1.5" filter="url(#card)"/>
+<rect x="752" y="74" width="290" height="3" rx="1.5" fill="#22c55e"/>
 
-<!-- DB cylinder icon -->
-<g transform="translate(766,88)">
-  <ellipse cx="18" cy="7" rx="18" ry="5" fill="#14532d" stroke="#166534" stroke-width="1"/>
-  <rect x="0" y="7" width="36" height="20" fill="#14532d" stroke="#166534" stroke-width="1" stroke-top="none"/>
-  <ellipse cx="18" cy="27" rx="18" ry="5" fill="#14532d" stroke="#166534" stroke-width="1"/>
-  <ellipse cx="18" cy="7" rx="18" ry="5" fill="#166534"/>
+<!-- DB cylinder -->
+<g transform="translate(762,88)">
+  <ellipse cx="22" cy="8" rx="22" ry="6" fill="#f0fdf4" stroke="#86efac" stroke-width="1.2"/>
+  <rect x="0" y="8" width="44" height="24" fill="#f0fdf4" stroke="#86efac" stroke-width="1.2"
+    stroke-dasharray="0" clip-path="inset(0 -2px -2px -2px)"/>
+  <ellipse cx="22" cy="32" rx="22" ry="6" fill="#f0fdf4" stroke="#86efac" stroke-width="1.2"/>
+  <ellipse cx="22" cy="8" rx="22" ry="6" fill="#dcfce7" stroke="#86efac" stroke-width="1.2"/>
+  <text x="22" y="23" text-anchor="middle" font-size="8.5" fill="#15803d" font-weight="600">holiday_db</text>
 </g>
-<text x="814" y="102" font-size="12" font-weight="700" fill="#4ade80">holiday_db</text>
+<text x="820" y="100" font-size="12" font-weight="700" fill="#15803d">holiday_db</text>
 
-<text x="766" y="126" font-size="9.5" fill="#4b7a57">hotels · bookings · travel_policies</text>
-<line x1="766" y1="133" x2="1020" y2="133" stroke="#166534" stroke-width="0.5" opacity="0.5"/>
-
-<text x="766" y="150" font-size="9" fill="#6b7280">Vector Search · no API key needed</text>
-<text x="766" y="165" font-size="9" fill="#6b7280" font-family="monospace">hotels_vector_index</text>
-<text x="766" y="179" font-size="9" fill="#6b7280" font-family="monospace">policy_vector_index</text>
+<line x1="762" y1="140" x2="1032" y2="140" stroke="#bbf7d0" stroke-width="1"/>
+<text x="762" y="156" font-size="9.5" fill="#6b7280">hotels · bookings · travel_policies</text>
+<text x="762" y="172" font-size="9" fill="#9ca3af">Vector Search · no API key needed</text>
+<text x="762" y="188" font-size="9" fill="#9ca3af" font-family="ui-monospace,monospace">hotels_vector_index</text>
+<text x="762" y="202" font-size="9" fill="#9ca3af" font-family="ui-monospace,monospace">policy_vector_index</text>
 
 <!-- autoEmbed badge -->
-<rect x="766" y="188" width="132" height="22" rx="11" fill="#14532d" stroke="#166534" stroke-width="1"/>
-<text x="771" y="202" font-size="8.5" fill="#4ade80" font-weight="600">✦ autoEmbed · voyage-4</text>
-<text x="766" y="276" font-size="9" fill="#6b7280">Vector Search · no API key needed</text>
+<rect x="762" y="210" width="136" height="24" rx="12" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
+<text x="769" y="225" font-size="8.5" fill="#15803d" font-weight="600">✦ autoEmbed · voyage-4</text>
 
-<!-- ═══════════════════════════════ agent_memory ══════════════════════════════ -->
-<rect x="756" y="318" width="276" height="230" rx="12" fill="#130d22" stroke="#5b21b6" stroke-width="1" filter="url(#s1)"/>
-<rect x="756" y="318" width="276" height="4" rx="2" fill="#a855f7"/>
+<!-- ═══ agent_memory ═══ -->
+<rect x="752" y="332" width="290" height="234" rx="12"
+  fill="white" stroke="#e9d5ff" stroke-width="1.5" filter="url(#card)"/>
+<rect x="752" y="332" width="290" height="3" rx="1.5" fill="#a855f7"/>
 
-<!-- Memory cylinder icon -->
-<g transform="translate(766,332)">
-  <ellipse cx="18" cy="7" rx="18" ry="5" fill="#2e1065" stroke="#5b21b6" stroke-width="1"/>
-  <rect x="0" y="7" width="36" height="20" fill="#2e1065" stroke="#5b21b6" stroke-width="1"/>
-  <ellipse cx="18" cy="27" rx="18" ry="5" fill="#2e1065" stroke="#5b21b6" stroke-width="1"/>
-  <ellipse cx="18" cy="7" rx="18" ry="5" fill="#4c1d95"/>
+<!-- Memory cylinder -->
+<g transform="translate(762,346)">
+  <ellipse cx="22" cy="8" rx="22" ry="6" fill="#faf5ff" stroke="#d8b4fe" stroke-width="1.2"/>
+  <rect x="0" y="8" width="44" height="24" fill="#faf5ff" stroke="#d8b4fe" stroke-width="1.2"
+    clip-path="inset(0 -2px -2px -2px)"/>
+  <ellipse cx="22" cy="32" rx="22" ry="6" fill="#faf5ff" stroke="#d8b4fe" stroke-width="1.2"/>
+  <ellipse cx="22" cy="8" rx="22" ry="6" fill="#f3e8ff" stroke="#d8b4fe" stroke-width="1.2"/>
+  <text x="22" y="23" text-anchor="middle" font-size="7.5" fill="#7e22ce" font-weight="600">agent_memory</text>
 </g>
-<text x="814" y="346" font-size="12" font-weight="700" fill="#c084fc">agent_memory</text>
+<text x="820" y="358" font-size="12" font-weight="700" fill="#7e22ce">agent_memory</text>
 
-<text x="766" y="371" font-size="9.5" fill="#7c5fb5">long_term_memory · checkpoints</text>
-<line x1="766" y1="378" x2="1020" y2="378" stroke="#5b21b6" stroke-width="0.5" opacity="0.5"/>
-
-<text x="766" y="396" font-size="9" fill="#6b7280" font-family="monospace">memory_vector_index</text>
-<text x="766" y="411" font-size="9" fill="#6b7280" font-family="monospace">MongoDBStore (long-term)</text>
-<text x="766" y="426" font-size="9" fill="#6b7280" font-family="monospace">MongoDBSaver (short-term · 30d TTL)</text>
+<line x1="762" y1="398" x2="1032" y2="398" stroke="#e9d5ff" stroke-width="1"/>
+<text x="762" y="414" font-size="9.5" fill="#6b7280">long_term_memory · checkpoints</text>
+<text x="762" y="430" font-size="9" fill="#9ca3af" font-family="ui-monospace,monospace">memory_vector_index</text>
+<text x="762" y="446" font-size="9" fill="#9ca3af" font-family="ui-monospace,monospace">MongoDBStore (long-term)</text>
+<text x="762" y="462" font-size="9" fill="#9ca3af" font-family="ui-monospace,monospace">MongoDBSaver (short-term · 30d TTL)</text>
 
 <!-- autoEmbed purple badge -->
-<rect x="766" y="435" width="132" height="22" rx="11" fill="#2e1065" stroke="#5b21b6" stroke-width="1"/>
-<text x="771" y="449" font-size="8.5" fill="#c084fc" font-weight="600">✦ autoEmbed · voyage-4</text>
+<rect x="762" y="470" width="136" height="24" rx="12" fill="#faf5ff" stroke="#d8b4fe" stroke-width="1"/>
+<text x="769" y="485" font-size="8.5" fill="#7e22ce" font-weight="600">✦ autoEmbed · voyage-4</text>
 
-<!-- ═══════════════════════════════ CONNECTION LINES ══════════════════════════ -->
-<!-- Draw ALL arrows AFTER all boxes so they appear on top cleanly -->
+<!-- ═══════════ ARROWS — drawn last, on top ═══════════ -->
 
 <!-- 1. User ↔ Orchestrator -->
-<line x1="108" y1="299" x2="146" y2="299" stroke="#475569" stroke-width="1.5"
-  marker-end="url(#arr-slate)" marker-start="url(#arr-slate-rev)"/>
-<text x="127" y="291" text-anchor="middle" font-size="8" fill="#475569">POST /chat</text>
-<text x="127" y="311" text-anchor="middle" font-size="8" fill="#475569">response</text>
+<line x1="110" y1="308" x2="146" y2="308" stroke="#cbd5e1" stroke-width="1.5"
+  marker-end="url(#as)" marker-start="url(#asr)"/>
+<text x="128" y="300" text-anchor="middle" font-size="8" fill="#94a3b8">POST /chat</text>
+<text x="128" y="320" text-anchor="middle" font-size="8" fill="#94a3b8">response</text>
 
-<!-- 2. Orchestrator → Hotels (elbow: right then up to y=115) -->
-<path d="M302,272 L317,272 L317,115 L346,115" fill="none" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr-green)"/>
+<!-- 2. Orchestrator → Hotels  (right-angle: right to x=330, then up to y=123, then right) -->
+<path d="M306,280 L330,280 L330,123 L350,123"
+  fill="none" stroke="#22c55e" stroke-width="1.5" marker-end="url(#ag)"/>
 
 <!-- 3. Orchestrator → Transport (straight right) -->
-<line x1="302" y1="299" x2="346" y2="271" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr-green)"/>
+<line x1="306" y1="308" x2="350" y2="290"
+  stroke="#22c55e" stroke-width="1.5" marker-end="url(#ag)"/>
 
-<!-- 4. Orchestrator → Policy (elbow: right then down to y=429) -->
-<path d="M302,318 L317,318 L317,429 L346,429" fill="none" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr-green)"/>
+<!-- 4. Orchestrator → Policy (right-angle: right to x=330, down to y=451, right) -->
+<path d="M306,330 L330,330 L330,451 L350,451"
+  fill="none" stroke="#22c55e" stroke-width="1.5" marker-end="url(#ag)"/>
 
 <!-- 5. Hotels → holiday_db (straight right) -->
-<line x1="682" y1="115" x2="756" y2="155" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr-green)"/>
+<line x1="676" y1="123" x2="752" y2="160"
+  stroke="#22c55e" stroke-width="1.5" marker-end="url(#ag)"/>
 
-<!-- 6. Transport → holiday_db (elbow going up cleanly) -->
-<path d="M682,271 L720,271 L720,200 L756,200" fill="none" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr-green)"/>
+<!-- 6. Transport → holiday_db (elbow: right to x=724, up to y=192, right) -->
+<path d="M676,287 L724,287 L724,225 L752,225"
+  fill="none" stroke="#22c55e" stroke-width="1.5" marker-end="url(#ag)"/>
 
-<!-- 7. Policy → holiday_db (elbow right then up) -->
-<path d="M682,429 L726,429 L726,240 L756,240" fill="none" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr-green)"/>
+<!-- 7. Policy → holiday_db (elbow: right to x=728, up to y=258, right) -->
+<path d="M676,451 L730,451 L730,262 L752,262"
+  fill="none" stroke="#22c55e" stroke-width="1.5" marker-end="url(#ag)"/>
 
-<!-- read/write label -->
-<text x="722" y="155" font-size="8.5" fill="#22c55e" font-weight="500">read / write</text>
-
-<!-- ─── MEMORY ARROWS ─── routed entirely outside the agent zone ───────────── -->
+<!-- "read / write" label -->
+<rect x="694" y="138" width="60" height="16" rx="8" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1"/>
+<text x="724" y="149" text-anchor="middle" font-size="8" fill="#16a34a" font-weight="500">read / write</text>
 
 <!-- 8. Long-term memory: Orchestrator → agent_memory
-     Route: UP from orchestrator top → along top rail (y=14) → down into agent_memory top
-     This stays completely ABOVE everything -->
-<path d="M224,220 L224,14 L894,14 L894,318" fill="none"
-  stroke="#a855f7" stroke-width="1.5" stroke-dasharray="5,3"
-  marker-end="url(#arr-purple)"/>
-<!-- Label on top rail -->
-<rect x="474" y="5" width="124" height="16" rx="8" fill="#1e0a3c"/>
-<text x="536" y="16" text-anchor="middle" font-size="8.5" fill="#a855f7" font-weight="600">long-term memory</text>
+     Runs ABOVE everything along y=16 rail — completely clear -->
+<path d="M226,224 L226,16 L908,16 L908,332"
+  fill="none" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="5,3"
+  marker-end="url(#ap)"/>
+<!-- Label on top rail, centred between orchestrator and DB -->
+<rect x="476" y="8" width="132" height="18" rx="9" fill="#faf5ff" stroke="#e9d5ff" stroke-width="1"/>
+<text x="542" y="20" text-anchor="middle" font-size="8.5" fill="#7c3aed" font-weight="600">long-term memory</text>
 
-<!-- 9. short-term memory: Agents → agent_memory
-     Route: from right edge of agent zone (x=716) → straight right, bridged between the two DBs -->
-<path d="M716,300 L730,300 L730,433 L756,433" fill="none"
-  stroke="#a855f7" stroke-width="1.5" stroke-dasharray="5,3"
-  marker-end="url(#arr-purple)"/>
-<rect x="700" y="304" width="56" height="14" rx="7" fill="#1e0a3c"/>
-<text x="728" y="314" text-anchor="middle" font-size="8" fill="#a855f7" font-weight="500">short-term</text>
+<!-- 9. Short-term: right side of agent zone → agent_memory
+     Travels right, between the two DB cards, cleanly -->
+<path d="M692,315 L736,315 L736,445 L752,445"
+  fill="none" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="5,3"
+  marker-end="url(#ap)"/>
+<!-- Label -->
+<rect x="698" y="306" width="64" height="16" rx="8" fill="#faf5ff" stroke="#e9d5ff" stroke-width="1"/>
+<text x="730" y="317" text-anchor="middle" font-size="8" fill="#7c3aed" font-weight="500">short-term</text>
 
-<!-- ═══════════════════════════════ LEGEND ════════════════════════════════════ -->
-<rect x="28" y="510" width="684" height="88" rx="12" fill="#0f1117" stroke="#1e293b" stroke-width="1"/>
-<text x="48" y="530" font-size="10" font-weight="600" fill="#475569" letter-spacing="0.5">LEGEND</text>
+<!-- ═══ LEGEND ═══ -->
+<rect x="24" y="536" width="700" height="80" rx="12"
+  fill="white" stroke="#e2e8f0" stroke-width="1" filter="url(#card)"/>
 
-<!-- Primary flow -->
-<line x1="48" y1="549" x2="78" y2="549" stroke="#22c55e" stroke-width="2" marker-end="url(#arr-green)"/>
-<text x="84" y="553" font-size="9.5" fill="#64748b">primary data flow</text>
+<text x="44" y="556" font-size="9.5" font-weight="600" fill="#94a3b8" letter-spacing="1">LEGEND</text>
 
-<!-- Memory flow -->
-<line x1="48" y1="572" x2="78" y2="572" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-purple)"/>
-<text x="84" y="576" font-size="9.5" fill="#64748b">memory (vector search)</text>
+<!-- primary flow -->
+<line x1="44" y1="574" x2="76" y2="574" stroke="#22c55e" stroke-width="1.8" marker-end="url(#ag)"/>
+<text x="82" y="578" font-size="9.5" fill="#64748b">primary data flow</text>
 
-<!-- Hotels color -->
-<rect x="210" y="540" width="10" height="10" rx="3" fill="#1e40af"/>
-<rect x="210" y="540" width="10" height="3" rx="1.5" fill="#3b82f6"/>
-<text x="225" y="549" font-size="9.5" fill="#64748b">Hotels</text>
+<!-- memory flow -->
+<line x1="44" y1="596" x2="76" y2="596" stroke="#8b5cf6" stroke-width="1.5"
+  stroke-dasharray="5,3" marker-end="url(#ap)"/>
+<text x="82" y="600" font-size="9.5" fill="#64748b">memory (vector search)</text>
 
-<!-- Transport color -->
-<rect x="278" y="540" width="10" height="10" rx="3" fill="#6b21a8"/>
-<rect x="278" y="540" width="10" height="3" rx="1.5" fill="#a855f7"/>
-<text x="293" y="549" font-size="9.5" fill="#64748b">Transport</text>
+<!-- Agent colour swatches -->
+<rect x="204" y="568" width="10" height="10" rx="2.5" fill="#bfdbfe" stroke="#3b82f6" stroke-width="1"/>
+<text x="219" y="578" font-size="9.5" fill="#64748b">Hotels</text>
 
-<!-- Policy color -->
-<rect x="362" y="540" width="10" height="10" rx="3" fill="#4a1d6b"/>
-<rect x="362" y="540" width="10" height="3" rx="1.5" fill="#7c3aed"/>
-<text x="377" y="549" font-size="9.5" fill="#64748b">Policy</text>
+<rect x="280" y="568" width="10" height="10" rx="2.5" fill="#ddd6fe" stroke="#8b5cf6" stroke-width="1"/>
+<text x="295" y="578" font-size="9.5" fill="#64748b">Transport</text>
 
-<!-- OpenAI logo in legend -->
-<g transform="translate(210,561)"><circle cx="7" cy="7" r="7" fill="white"/><path d="M7,2 L7,12 M2,4.7 L12,9.3 M2,9.3 L12,4.7" stroke="#111827" stroke-width="1.4" stroke-linecap="round"/></g>
-<text x="223" y="572" font-size="9.5" fill="#64748b">OpenAI</text>
+<rect x="372" y="568" width="10" height="10" rx="2.5" fill="#e9d5ff" stroke="#a855f7" stroke-width="1"/>
+<text x="387" y="578" font-size="9.5" fill="#64748b">Policy</text>
 
-<!-- LangGraph logo in legend -->
-<g transform="translate(270,561)"><rect width="14" height="14" rx="3" fill="#1c64f2"/><path d="M3.5,2.5 L3.5,11 L10,11" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
-<text x="289" y="572" font-size="9.5" fill="#64748b">LangGraph.js</text>
+<!-- OpenAI in legend -->
+<g transform="translate(204,585)">
+  <circle cx="7" cy="7" r="7" fill="#0a0a0a"/>
+  <g stroke="white" stroke-width="1.3" stroke-linecap="round">
+    <line x1="7" y1="2.5" x2="7" y2="11.5"/>
+    <line x1="2.5" y1="5" x2="11.5" y2="9"/>
+    <line x1="2.5" y1="9" x2="11.5" y2="5"/>
+  </g>
+</g>
+<text x="219" y="596" font-size="9.5" fill="#64748b">OpenAI</text>
 
-<!-- MongoDB legend -->
-<g transform="translate(354,561)"><rect width="14" height="14" rx="3" fill="#00ed64"/><path d="M7,1.5 Q11,4 11,7 Q11,10 7,12.5 Q3,10 3,7 Q3,4 7,1.5 Z" fill="white"/><line x1="7" y1="7" x2="7" y2="12.5" stroke="#00ed64" stroke-width="1.2"/></g>
-<text x="373" y="572" font-size="9.5" fill="#64748b">MongoDB Atlas</text>
+<!-- LangGraph in legend -->
+<g transform="translate(275,585)">
+  <rect width="14" height="14" rx="3" fill="#1d4ed8"/>
+  <path d="M3.5,3 L3.5,11 L10.5,11" stroke="white" stroke-width="1.8"
+    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</g>
+<text x="295" y="596" font-size="9.5" fill="#64748b">LangGraph.js</text>
+
+<!-- MongoDB in legend -->
+<g transform="translate(372,585)">
+  <rect width="14" height="14" rx="3" fill="#00ed64"/>
+  <path d="M7,1.5 Q11,4 11,7 Q11,10 7,12 Q3,10 3,7 Q3,4 7,1.5Z" fill="white"/>
+  <line x1="7" y1="7" x2="7" y2="12" stroke="#00ed64" stroke-width="1.2"/>
+</g>
+<text x="392" y="596" font-size="9.5" fill="#64748b">MongoDB Atlas</text>
 
 </svg>
