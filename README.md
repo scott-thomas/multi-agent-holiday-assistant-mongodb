@@ -16,41 +16,8 @@ An orchestrator classifies every incoming query and delegates it to one of three
 
 ## Architecture
 
-```mermaid
-%%{init: {"theme": "base", "themeVariables": {"primaryColor": "#ffffff", "primaryBorderColor": "#d1d5db", "primaryTextColor": "#111827", "lineColor": "#9ca3af", "secondaryColor": "#f9fafb", "clusterBkg": "#f9fafb", "clusterBorder": "#e5e7eb", "edgeLabelBackground": "#ffffff", "fontFamily": "ui-sans-serif, system-ui, sans-serif", "fontSize": "13px"}}}%%
-flowchart LR
-    User(["👤 User"])
+![Architecture diagram](docs/architecture.svg)
 
-    subgraph App["Express API · :3000"]
-        ORC["🧠 Orchestrator\nGPT-4o-mini · intent router"]
-    end
-
-    subgraph Agents["LangGraph.js Agents  ·  GPT-4o + Tool Calling"]
-        direction TB
-        H["🏨 Hotels\nSearch · Book · Cancel"]
-        T["🚂 Transport\nRoutes · Book · Cancel"]
-        P["📋 Policy\nRules · Compliance"]
-    end
-
-    subgraph Atlas["MongoDB Atlas  ·  M10 · AWS eu-west-1"]
-        direction TB
-        HD[("holiday_db\nhotels · bookings · policies\n— autoEmbed voyage-4 —")]
-        MEM[("agent_memory\nlong_term_memory · checkpoints\n— autoEmbed voyage-4 —")]
-    end
-
-    User -->|"POST /chat"| ORC
-    ORC --> H & T & P
-    ORC <-->|"long-term memory"| MEM
-    H & T & P -->|"read / write"| HD
-    H & T & P -.->|"short-term memory"| MEM
-    ORC -->|"response"| User
-
-    style H fill:#f0fdf4,stroke:#16a34a,color:#14532d
-    style T fill:#eff6ff,stroke:#3b82f6,color:#1e3a8a
-    style P fill:#fdf4ff,stroke:#a855f7,color:#581c87
-    style HD fill:#f0fdf4,stroke:#16a34a,color:#14532d
-    style MEM fill:#fdf4ff,stroke:#a855f7,color:#581c87
-```
 
 ### Memory Strategy
 
