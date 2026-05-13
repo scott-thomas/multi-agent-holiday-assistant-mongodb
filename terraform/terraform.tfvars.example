@@ -1,0 +1,51 @@
+# ── terraform.tfvars.example ───────────────────────────────────────────────────
+# Copy this file to terraform.tfvars, fill in your values, and run:
+#
+#   cd terraform
+#   terraform init
+#   terraform plan
+#   terraform apply
+#
+# NEVER commit terraform.tfvars to source control – it contains secrets.
+# Add it to .gitignore (see the project root .gitignore).
+#
+# Atlas API keys: https://www.mongodb.com/docs/atlas/configure-api-access/
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ── Atlas API ──────────────────────────────────────────────────────────────────
+# Create a Project-level API key with the "Project Owner" role:
+#   Atlas UI → Your Project → Project Settings → Access Manager → Applications → Create API Key
+#   Required role: Project Owner  (Read Only is NOT sufficient)
+#   Docs: https://www.mongodb.com/docs/atlas/configure-api-access/
+atlas_public_key  = "your-atlas-api-public-key"
+atlas_private_key = "your-atlas-api-private-key"
+atlas_project_id  = "your-atlas-project-id"       # 24-hex-char string from Atlas UI
+
+# ── Cluster ────────────────────────────────────────────────────────────────────
+cluster_name           = "holiday-ai-assistant"
+cloud_provider         = "AWS"
+region                 = "EU_WEST_1"   # AWS Ireland – closest to London
+cluster_tier           = "M10"         # Minimum tier for Atlas Vector Search
+mongo_db_major_version = "8.0"
+disk_size_gb           = 10
+cloud_backup           = true
+
+# ── Database user ──────────────────────────────────────────────────────────────
+db_username = "holiday-app-user"
+db_password = "ChangeMe_SuperSecure123!"   # Must be strong; avoid URL-special chars
+
+# ── Network access ─────────────────────────────────────────────────────────────
+# Restrict to your IP(s) in production:
+#   allowed_cidrs = ["203.0.113.42/32", "198.51.100.0/24"]
+allowed_cidrs = ["0.0.0.0/0"]
+
+# ── Application secrets ────────────────────────────────────────────────────────
+# Voyage AI API key is NOT required – Atlas auto-embedding handles vectorisation
+# server-side via the MongoDB AI Gateway.
+openai_api_key   = "sk-..."
+
+# ── Seeding ────────────────────────────────────────────────────────────────────
+seed_database = true
+
+# Optional: only needed if you run terraform from a directory other than terraform/
+# app_root_path = "/absolute/path/to/AI-Bots-Atlas-AutoEmbeddings-WithMemory"

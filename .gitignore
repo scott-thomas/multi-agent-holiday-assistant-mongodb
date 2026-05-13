@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+dist/
+
+# Environment
+.env
+
+# macOS
+.DS_Store
+
+# Terraform
+terraform/.terraform/
+terraform/.terraform.tfstate.lock.info
+# .terraform.lock.hcl is intentionally tracked (provider version pinning)
+terraform/terraform.tfvars
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/*.tfplan

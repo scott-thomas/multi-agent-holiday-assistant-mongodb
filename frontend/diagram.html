@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Amadeus AI — System Architecture</title>
+  <style>
+    :root {
+      --bg:           #0f1117;
+      --surface:      #1a1d27;
+      --surface2:     #21253a;
+      --border:       #2e3348;
+      --text:         #e2e8f0;
+      --muted:        #8892a4;
+
+      --amadeus:      #0070f3;
+      --orchestrator: #6366f1;
+      --fares:        #0ea5e9;
+      --reservations: #10b981;
+      --policy:       #f59e0b;
+      --memory-short: #ec4899;
+      --memory-long:  #a855f7;
+      --mongo:        #00ed64;
+      --voyage:       #f97316;
+
+      --packet-orch:  #6366f1;
+      --packet-fares: #0ea5e9;
+      --packet-res:   #10b981;
+      --packet-pol:   #f59e0b;
+      --packet-mem:   #a855f7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: auto;
+    }
+
+    /* ─── Header ─────────────────────────────── */
+    header {
+      padding: 24px 40px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-title {
+      display: flex; align-items: center; gap: 12px;
+    }
+
+    .header-title .icon {
+      width: 40px; height: 40px;
+      background: var(--amadeus);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+
+    h1 { font-size: 1.2rem; font-weight: 700; }
+    .sub { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+
+    /* ─── Controls ───────────────────────────── */
+    .controls {
+      display: flex; gap: 10px; align-items: center;
+      background: var(--surface);
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .ctrl-btn {
+      padding: 8px 18px;
+      border: none; border-radius: 6px;
+      font-size: 0.8rem; font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.2s;
+    }
+
+    .btn-fares        { background: var(--fares);        color: #fff; }
+    .btn-reservations { background: var(--reservations); color: #fff; }
+    .btn-policy       { background: var(--policy);       color: #000; }
+    .btn-reset        { background: var(--border);       color: var(--text); }
+    .ctrl-btn:hover   { filter: brightness(1.15); transform: translateY(-1px); }
+    .ctrl-btn:disabled { opacity: 0.3; cursor: not-allowed; filter: none; transform: none; }
+
+    .speed-label { font-size: 0.75rem; color: var(--muted); }
+    input[type=range] { width: 90px; accent-color: var(--amadeus); }
+
+    /* ─── Main canvas ────────────────────────── */
+    .canvas-wrap {
+      position: relative;
+      width: 1500px;
+      height: 820px;
+      margin: 30px auto;
+    }
+
+    svg.lines-layer {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* ─── Node base ──────────────────────────── */
+    .node {
+      position: absolute;
+      border-radius: 12px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 14px 12px;
+      z-index: 10;
+      transition: box-shadow 0.3s, border-color 0.3s;
+      user-select: none;
+    }
+
+    .node.glow-orch  { border-color: var(--orchestrator); box-shadow: 0 0 18px rgba(99,102,241,.5); }
+    .node.glow-fares { border-color: var(--fares);        box-shadow: 0 0 18px rgba(14,165,233,.5); }
+    .node.glow-res   { border-color: var(--reservations); box-shadow: 0 0 18px rgba(16,185,129,.5); }
+    .node.glow-pol   { border-color: var(--policy);       box-shadow: 0 0 18px rgba(245,158,11,.5); }
+    .node.glow-mem   { border-color: var(--memory-long);  box-shadow: 0 0 18px rgba(168,85,247,.5); }
+    .node.glow-mongo { border-color: var(--mongo);        box-shadow: 0 0 18px rgba(0,237,100,.5); }
+
+    .node-icon { font-size: 26px; margin-bottom: 6px; }
+    .node-name { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .node-sub  { font-size: 0.64rem; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+    .node-badge {
+      margin-top: 7px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    /* ─── Tool chips inside agent nodes ─────── */
+    .tool-chips {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 100%;
+    }
+
+    .chip {
+      padding: 3px 7px;
+      border-radius: 4px;
+      font-size: 0.6rem;
+      font-weight: 600;
+      font-family: monospace;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      color: var(--muted);
+      text-align: left;
+    }
+
+    /* ─── Step label ─────────────────────────── */
+    .step-label {
+      position: absolute;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--muted);
+      background: var(--bg);
+      padding: 2px 7px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      z-index: 6;
+      pointer-events: none;
+    }
+
+    /* ─── Packets ────────────────────────────── */
+    .pkt {
+      position: absolute;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      z-index: 30;
+      pointer-events: none;
+      opacity: 0;
+      transform: translate(-50%, -50%);
+    }
+
+    /* ─── Legend ─────────────────────────────── */
+    .legend {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      padding: 16px 40px 30px;
+      border-top: 1px solid var(--border);
+    }
+
+    .legend-item {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 0.72rem; color: var(--muted);
+    }
+
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ─── Info panel ─────────────────────────── */
+    #info-panel {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      width: 320px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      font-size: 0.78rem;
+      line-height: 1.6;
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    #info-panel.visible { opacity: 1; pointer-events: auto; }
+    #info-panel .panel-title { font-weight: 700; margin-bottom: 6px; font-size: 0.85rem; }
+    #info-panel .panel-body  { color: var(--muted); }
+
+    /* ─── Step counter ───────────────────────── */
+    #step-counter {
+      position: fixed;
+      top: 24px; right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      z-index: 100;
+    }
+
+    #step-counter span { color: var(--text); font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">
+    <div class="icon">✈️</div>
+    <div>
+      <h1>Amadeus Agentic AI — Architecture Diagram</h1>
+      <div class="sub">Interactive flow: trace a query from browser to MongoDB Atlas and back</div>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="speed-label">Speed</div>
+    <input type="range" id="speed-slider" min="1" max="5" value="3" />
+    <button class="ctrl-btn btn-fares"        onclick="runDemo('fares')">✈️ Fares Query</button>
+    <button class="ctrl-btn btn-reservations" onclick="runDemo('reservations')">📋 Reservation</button>
+    <button class="ctrl-btn btn-policy"       onclick="runDemo('policy')">📖 Policy Query</button>
+    <button class="ctrl-btn btn-reset"        onclick="resetAll()" id="reset-btn">↺ Reset</button>
+  </div>
+</header>
+
+<!-- ─── Main diagram ──────────────────────────────────────────────────────────── -->
+<div class="canvas-wrap" id="canvas">
+  <svg class="lines-layer" id="svg"></svg>
+
+  <!-- USER / FRONTEND -->
+  <div class="node" id="n-browser" style="left:20px; top:360px; width:130px;" title="Browser Chat UI">
+    <div class="node-icon">🌐</div>
+    <div class="node-name">Browser</div>
+    <div class="node-sub">frontend/index.html<br>POST /chat</div>
+  </div>
+
+  <!-- EXPRESS SERVER -->
+  <div class="node" id="n-express" style="left:200px; top:340px; width:145px;" title="Express.js REST server">
+    <div class="node-icon">⚡</div>
+    <div class="node-name">Express Server</div>
+    <div class="node-sub">index.ts<br>port 3000</div>
+    <div class="node-badge" style="background:rgba(0,112,243,.15); color:var(--amadeus);">REST API</div>
+  </div>
+
+  <!-- ORCHESTRATOR -->
+  <div class="node" id="n-orch" style="left:400px; top:315px; width:175px;">
+    <div class="node-icon">🎯</div>
+    <div class="node-name">Orchestrator</div>
+    <div class="node-sub">orchestrator.ts</div>
+    <div class="node-badge" style="background:rgba(99,102,241,.15); color:var(--orchestrator);">LangGraph StateGraph</div>
+    <div class="tool-chips">
+      <div class="chip">① load_memories</div>
+      <div class="chip">② classify_intent</div>
+      <div class="chip">③ call_specialist</div>
+      <div class="chip">④ save_memories</div>
+    </div>
+  </div>
+
+  <!-- GPT ROUTER -->
+  <div class="node" id="n-router" style="left:400px; top:165px; width:175px;">
+    <div class="node-icon">🧠</div>
+    <div class="node-name">GPT-4o-mini</div>
+    <div class="node-sub">Router / Classifier<br>withStructuredOutput</div>
+    <div class="node-badge" style="background:rgba(99,102,241,.15); color:var(--orchestrator);">classify_intent</div>
+  </div>
+
+  <!-- FARES AGENT -->
+  <div class="node" id="n-fares" style="left:650px; top:60px; width:175px;">
+    <div class="node-icon">✈️</div>
+    <div class="node-name">Fares Agent</div>
+    <div class="node-sub">GPT-4o + Tools</div>
+    <div class="node-badge" style="background:rgba(14,165,233,.15); color:var(--fares);">fares-agent.ts</div>
+    <div class="tool-chips">
+      <div class="chip">search_flights</div>
+      <div class="chip">get_cheapest_fares</div>
+      <div class="chip">get_fare_rules</div>
+      <div class="chip">check_availability</div>
+    </div>
+  </div>
+
+  <!-- RESERVATIONS AGENT -->
+  <div class="node" id="n-res" style="left:650px; top:310px; width:175px;">
+    <div class="node-icon">📋</div>
+    <div class="node-name">Reservations Agent</div>
+    <div class="node-sub">GPT-4o + Tools</div>
+    <div class="node-badge" style="background:rgba(16,185,129,.15); color:var(--reservations);">reservations-agent.ts</div>
+    <div class="tool-chips">
+      <div class="chip">create_reservation</div>
+      <div class="chip">get_reservation</div>
+      <div class="chip">list_reservations</div>
+      <div class="chip">cancel_reservation</div>
+    </div>
+  </div>
+
+  <!-- POLICY AGENT -->
+  <div class="node" id="n-pol" style="left:650px; top:570px; width:175px;">
+    <div class="node-icon">📖</div>
+    <div class="node-name">Policy Agent</div>
+    <div class="node-sub">GPT-4o + Tools</div>
+    <div class="node-badge" style="background:rgba(245,158,11,.15); color:var(--policy);">policy-agent.ts</div>
+    <div class="tool-chips">
+      <div class="chip">search_policy</div>
+      <div class="chip">get_change_fee_policy</div>
+      <div class="chip">get_refund_rules</div>
+      <div class="chip">get_policy_by_category</div>
+    </div>
+  </div>
+
+  <!-- VECTOR SEARCH / ATLAS -->
+  <div class="node" id="n-atlas" style="left:920px; top:160px; width:160px;">
+    <div class="node-icon">🗄️</div>
+    <div class="node-name">Atlas Vector Search</div>
+    <div class="node-sub">amadeus_db<br>flight_fares<br>amadeus_policies</div>
+    <div class="node-badge" style="background:rgba(0,237,100,.12); color:var(--mongo);">$vectorSearch</div>
+  </div>
+
+  <!-- RESERVATIONS COLLECTION -->
+  <div class="node" id="n-resvdb" style="left:920px; top:380px; width:160px;">
+    <div class="node-icon">💾</div>
+    <div class="node-name">Reservations DB</div>
+    <div class="node-sub">amadeus_db<br>.reservations<br>PNR CRUD</div>
+    <div class="node-badge" style="background:rgba(16,185,129,.12); color:var(--reservations);">MongoDB</div>
+  </div>
+
+  <!-- VOYAGE AI -->
+  <div class="node" id="n-voyage" style="left:920px; top:565px; width:160px;">
+    <div class="node-icon">🚀</div>
+    <div class="node-name">Voyage AI</div>
+    <div class="node-sub">voyage-3.5<br>1024-dim vectors<br>Atlas Endpoint</div>
+    <div class="node-badge" style="background:rgba(249,115,22,.15); color:var(--voyage);">Embeddings</div>
+  </div>
+
+  <!-- SHORT-TERM MEMORY -->
+  <div class="node" id="n-stmem" style="left:1190px; top:80px; width:160px;">
+    <div class="node-icon">⚡</div>
+    <div class="node-name">Short-Term Memory</div>
+    <div class="node-sub">MongoDBSaver<br>agent_memory<br>.checkpoints</div>
+    <div class="node-badge" style="background:rgba(236,72,153,.15); color:var(--memory-short);">Per Thread</div>
+  </div>
+
+  <!-- LONG-TERM MEMORY -->
+  <div class="node" id="n-ltmem" style="left:1190px; top:310px; width:160px;">
+    <div class="node-icon">🧠</div>
+    <div class="node-name">Long-Term Memory</div>
+    <div class="node-sub">MongoDBStore<br>agent_memory<br>.long_term_memory</div>
+    <div class="node-badge" style="background:rgba(168,85,247,.15); color:var(--memory-long);">Per User</div>
+  </div>
+
+  <!-- MCP SERVER -->
+  <div class="node" id="n-mcp" style="left:1190px; top:560px; width:160px;">
+    <div class="node-icon">🔌</div>
+    <div class="node-name">MCP Server</div>
+    <div class="node-sub">mcp-server/index.ts<br>JSON-RPC 2.0<br>stdio transport</div>
+    <div class="node-badge" style="background:rgba(99,102,241,.12); color:var(--orchestrator);">Claude / Cursor</div>
+  </div>
+
+  <!-- Step labels (drawn statically) -->
+  <div class="step-label" style="left:155px; top:375px;">① HTTP POST</div>
+  <div class="step-label" style="left:358px; top:375px;">② invoke()</div>
+  <div class="step-label" style="left:397px; top:274px;">③ classify</div>
+  <div class="step-label" style="left:600px; top:170px;">④ route</div>
+</div>
+
+<!-- ─── Legend ─────────────────────────────────────────────────────────────── -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--orchestrator)"></div>Orchestrator flow</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--fares)"></div>Fares query</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--reservations)"></div>Reservation query</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--policy)"></div>Policy query</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--memory-long)"></div>Memory read/write</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--mongo)"></div>MongoDB Atlas</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--voyage)"></div>Voyage AI embeddings</div>
+</div>
+
+<div id="info-panel">
+  <div class="panel-title" id="panel-title">—</div>
+  <div class="panel-body"  id="panel-body">—</div>
+</div>
+
+<div id="step-counter">Step: <span id="step-text">idle</span></div>
+
+<script>
+// ─── Layout helpers ────────────────────────────────────────────────────────────
+function mid(el) {
+  const canvas = document.getElementById('canvas').getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  return {
+    x: r.left - canvas.left + r.width / 2,
+    y: r.top  - canvas.top  + r.height / 2,
+  };
+}
+
+function rightOf(el) {
+  const canvas = document.getElementById('canvas').getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  return { x: r.right - canvas.left, y: r.top - canvas.top + r.height / 2 };
+}
+
+function leftOf(el) {
+  const canvas = document.getElementById('canvas').getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  return { x: r.left - canvas.left, y: r.top - canvas.top + r.height / 2 };
+}
+
+function topOf(el) {
+  const canvas = document.getElementById('canvas').getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  return { x: r.left - canvas.left + r.width / 2, y: r.top - canvas.top };
+}
+
+function bottomOf(el) {
+  const canvas = document.getElementById('canvas').getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  return { x: r.left - canvas.left + r.width / 2, y: r.bottom - canvas.top };
+}
+
+// ─── Static connection lines ──────────────────────────────────────────────────
+function drawStaticLines() {
+  const svg = document.getElementById('svg');
+  svg.innerHTML = '';
+
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  const colors = [
+    ['arr-orch',  '#6366f1'],
+    ['arr-fares', '#0ea5e9'],
+    ['arr-res',   '#10b981'],
+    ['arr-pol',   '#f59e0b'],
+    ['arr-mem',   '#a855f7'],
+    ['arr-mongo', '#00ed64'],
+    ['arr-gray',  '#3a3f52'],
+  ];
+  colors.forEach(([id, color]) => {
+    const m = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+    m.setAttribute('id', id);
+    m.setAttribute('viewBox', '0 0 10 10');
+    m.setAttribute('refX', '9'); m.setAttribute('refY', '5');
+    m.setAttribute('markerWidth', '5'); m.setAttribute('markerHeight', '5');
+    m.setAttribute('orient', 'auto-start-reverse');
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
+    p.setAttribute('fill', color);
+    m.appendChild(p); defs.appendChild(m);
+  });
+  svg.appendChild(defs);
+
+  const staticEdges = [
+    // Browser → Express
+    { from: 'n-browser', to: 'n-express', color: '#3a3f52', marker: 'arr-gray', label: 'HTTP' },
+    // Express → Orchestrator
+    { from: 'n-express', to: 'n-orch',    color: '#6366f1', marker: 'arr-orch',  label: 'invoke' },
+    // Orchestrator → Router
+    { from: 'n-orch',    to: 'n-router',  color: '#6366f1', marker: 'arr-orch',  label: 'classify' },
+    // Orchestrator → Agents (dashed)
+    { from: 'n-orch', to: 'n-fares', color: '#0ea5e9', marker: 'arr-fares', dashed: true, label: 'fares' },
+    { from: 'n-orch', to: 'n-res',   color: '#10b981', marker: 'arr-res',   dashed: true, label: 'reservations' },
+    { from: 'n-orch', to: 'n-pol',   color: '#f59e0b', marker: 'arr-pol',   dashed: true, label: 'policy' },
+    // Agents → Atlas
+    { from: 'n-fares', to: 'n-atlas',  color: '#00ed64', marker: 'arr-mongo', label: 'vector search' },
+    { from: 'n-pol',   to: 'n-atlas',  color: '#00ed64', marker: 'arr-mongo', label: '' },
+    // Reservations → reservations DB
+    { from: 'n-res',   to: 'n-resvdb', color: '#10b981', marker: 'arr-res',   label: 'CRUD' },
+    // Fares + policy → Voyage AI
+    { from: 'n-fares', to: 'n-voyage', color: '#f97316', marker: 'arr-mongo',  label: '' },
+    { from: 'n-pol',   to: 'n-voyage', color: '#f97316', marker: 'arr-mongo',  label: '' },
+    // Agents → short-term mem
+    { from: 'n-fares', to: 'n-stmem',  color: '#ec4899', marker: 'arr-mem',  label: 'checkpoint' },
+    { from: 'n-res',   to: 'n-stmem',  color: '#ec4899', marker: 'arr-mem',  label: '' },
+    { from: 'n-pol',   to: 'n-stmem',  color: '#ec4899', marker: 'arr-mem',  label: '' },
+    // Orchestrator ↔ long-term mem
+    { from: 'n-orch',  to: 'n-ltmem',  color: '#a855f7', marker: 'arr-mem',  label: 'load/save' },
+    // MCP → Atlas (external client access)
+    { from: 'n-mcp',   to: 'n-resvdb', color: '#3a3f52', marker: 'arr-gray', dashed: true, label: 'tools' },
+    { from: 'n-mcp',   to: 'n-atlas',  color: '#3a3f52', marker: 'arr-gray', dashed: true, label: '' },
+  ];
+
+  staticEdges.forEach(e => addLine(svg, e));
+}
+
+function addLine(svg, e) {
+  const fromEl = document.getElementById(e.from);
+  const toEl   = document.getElementById(e.to);
+  if (!fromEl || !toEl) return;
+
+  const start = rightOf(fromEl);
+  const end   = leftOf(toEl);
+
+  // Use a cubic bezier so lines curve nicely
+  const cx1 = start.x + (end.x - start.x) * 0.45;
+  const cy1 = start.y;
+  const cx2 = end.x   - (end.x - start.x) * 0.45;
+  const cy2 = end.y;
+
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  const d = `M ${start.x} ${start.y} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${end.x} ${end.y}`;
+  path.setAttribute('d', d);
+  path.setAttribute('fill', 'none');
+  path.setAttribute('stroke', e.color);
+  path.setAttribute('stroke-width', '1.5');
+  path.setAttribute('opacity', '0.35');
+  if (e.dashed) path.setAttribute('stroke-dasharray', '6 4');
+  path.setAttribute('marker-end', `url(#${e.marker})`);
+  svg.appendChild(path);
+
+  // Optional label
+  if (e.label) {
+    const midX = (start.x + end.x) / 2;
+    const midY = (start.y + end.y) / 2 - 8;
+    const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    txt.setAttribute('x', midX); txt.setAttribute('y', midY + 4);
+    txt.setAttribute('fill', e.color); txt.setAttribute('font-size', '10');
+    txt.setAttribute('font-family', 'monospace'); txt.setAttribute('font-weight', 'bold');
+    txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('opacity', '0.65');
+    txt.textContent = e.label;
+    svg.appendChild(txt);
+  }
+}
+
+// ─── Packet animation engine ──────────────────────────────────────────────────
+let animRunning = false;
+let pktPool = [];
+
+function speedMs() {
+  const v = parseInt(document.getElementById('speed-slider').value);
+  return Math.round(1400 - v * 200); // 1200ms – 200ms
+}
+
+function spawnPacket(color) {
+  const el = document.createElement('div');
+  el.className = 'pkt';
+  el.style.background = color;
+  el.style.boxShadow = `0 0 8px ${color}, 0 0 16px ${color}`;
+  document.getElementById('canvas').appendChild(el);
+  pktPool.push(el);
+  return el;
+}
+
+function removePacket(el) {
+  if (el && el.parentNode) el.remove();
+  pktPool = pktPool.filter(p => p !== el);
+}
+
+function animateTo(el, pos, durationMs) {
+  return new Promise(resolve => {
+    el.style.transition = `left ${durationMs}ms linear, top ${durationMs}ms linear, opacity ${durationMs * 0.3}ms`;
+    el.style.left = pos.x + 'px';
+    el.style.top  = pos.y + 'px';
+    setTimeout(resolve, durationMs);
+  });
+}
+
+function showPacket(el, pos) {
+  el.style.transition = 'none';
+  el.style.left = pos.x + 'px';
+  el.style.top  = pos.y + 'px';
+  el.style.opacity = '1';
+}
+
+function hidePacket(el) {
+  el.style.opacity = '0';
+}
+
+async function hop(el, points, ms) {
+  for (const pt of points) {
+    await animateTo(el, pt, ms);
+  }
+}
+
+function glow(nodeId, cls) {
+  const el = document.getElementById(nodeId);
+  el.classList.add(cls);
+  return () => el.classList.remove(cls);
+}
+
+function setStep(text) {
+  document.getElementById('step-text').textContent = text;
+}
+
+function showInfo(title, body) {
+  document.getElementById('panel-title').textContent = title;
+  document.getElementById('panel-body').textContent  = body;
+  document.getElementById('info-panel').classList.add('visible');
+}
+
+function hideInfo() {
+  document.getElementById('info-panel').classList.remove('visible');
+}
+
+// ─── Demo flows ───────────────────────────────────────────────────────────────
+async function runDemo(type) {
+  if (animRunning) return;
+  animRunning = true;
+  disableBtns(true);
+  resetGlows();
+  hideInfo();
+
+  const ms = speedMs();
+
+  const colors = {
+    fares:        { pkt: '#0ea5e9', glow: 'glow-fares' },
+    reservations: { pkt: '#10b981', glow: 'glow-res'   },
+    policy:       { pkt: '#f59e0b', glow: 'glow-pol'   },
+  };
+  const c = colors[type];
+
+  // ── STEP 1: Browser → Express ─────────────────────────────────────────────
+  setStep('1 / 8 — Browser sends POST /chat');
+  showInfo('① Browser → Express', `User types a ${type === 'fares' ? 'fare search' : type === 'reservations' ? 'booking' : 'policy'} question. The frontend calls POST /chat with { message, userId }.`);
+  const p1 = spawnPacket('#0070f3');
+  showPacket(p1, rightOf(document.getElementById('n-browser')));
+  const ungBrowser = glow('n-browser', 'glow-orch');
+  await hop(p1, [leftOf(document.getElementById('n-express'))], ms);
+  ungBrowser();
+  hidePacket(p1);
+
+  // ── STEP 2: Express → Orchestrator ────────────────────────────────────────
+  setStep('2 / 8 — Express calls Orchestrator');
+  showInfo('② Express → Orchestrator', 'Express assigns a UUID threadId and calls callOrchestrator(). A new LangGraph StateGraph execution begins.');
+  const p2 = spawnPacket('#6366f1');
+  const ungExpress = glow('n-express', 'glow-orch');
+  showPacket(p2, rightOf(document.getElementById('n-express')));
+  await hop(p2, [leftOf(document.getElementById('n-orch'))], ms);
+  ungExpress();
+  hidePacket(p2);
+
+  // ── STEP 3: Orchestrator loads memories ───────────────────────────────────
+  setStep('3 / 8 — load_memories from MongoDBStore');
+  showInfo('③ load_memories', 'The orchestrator reads the user\'s long-term memories from agent_memory.long_term_memory, namespaced by [userId, "memories"]. This is private per user.');
+  const ungOrch = glow('n-orch', 'glow-orch');
+  const p3 = spawnPacket('#a855f7');
+  showPacket(p3, rightOf(document.getElementById('n-orch')));
+  await hop(p3, [leftOf(document.getElementById('n-ltmem'))], ms);
+  const ungLtmem = glow('n-ltmem', 'glow-mem');
+  await new Promise(r => setTimeout(r, ms * 0.5));
+  await hop(p3, [rightOf(document.getElementById('n-orch'))], ms);
+  ungLtmem();
+  hidePacket(p3);
+
+  // ── STEP 4: classify_intent via GPT-4o-mini ───────────────────────────────
+  setStep('4 / 8 — classify_intent via GPT-4o-mini');
+  showInfo('④ classify_intent', `GPT-4o-mini with withStructuredOutput(RouterSchema) reads the query and returns { agent: "${type}", reasoning: "..." }. The result is stored in state.selectedAgent.`);
+  const p4 = spawnPacket('#6366f1');
+  showPacket(p4, topOf(document.getElementById('n-orch')));
+  await hop(p4, [bottomOf(document.getElementById('n-router'))], ms);
+  const ungRouter = glow('n-router', 'glow-orch');
+  await new Promise(r => setTimeout(r, ms * 0.6));
+  await hop(p4, [topOf(document.getElementById('n-orch'))], ms);
+  ungRouter();
+  hidePacket(p4);
+
+  // ── STEP 5: call_specialist ────────────────────────────────────────────────
+  const agentNodeId = type === 'fares' ? 'n-fares' : type === 'reservations' ? 'n-res' : 'n-pol';
+  setStep(`5 / 8 — call_specialist → ${type} agent`);
+  showInfo('⑤ call_specialist', `The orchestrator's switch statement calls call${type.charAt(0).toUpperCase() + type.slice(1)}Agent(). A second LangGraph StateGraph runs inside this specialist agent.`);
+  const p5 = spawnPacket(c.pkt);
+  showPacket(p5, rightOf(document.getElementById('n-orch')));
+  await hop(p5, [leftOf(document.getElementById(agentNodeId))], ms);
+  const ungAgent = glow(agentNodeId, c.glow);
+  hidePacket(p5);
+
+  // ── STEP 6: Agent tool calls ──────────────────────────────────────────────
+  if (type === 'fares') {
+    setStep('6 / 8 — Fares agent: vector search + Voyage AI embedding');
+    showInfo('⑥ Tool: search_flights', 'The fares agent calls fetchEmbedding() via Voyage AI (voyage-3.5, 1024-dim) then runs $vectorSearch against amadeus_db.flight_fares.');
+
+    // Voyage AI embed
+    const pv = spawnPacket('#f97316');
+    showPacket(pv, rightOf(document.getElementById(agentNodeId)));
+    await hop(pv, [leftOf(document.getElementById('n-voyage'))], ms);
+    glow('n-voyage', 'glow-mongo');
+    await new Promise(r => setTimeout(r, ms * 0.4));
+    await hop(pv, [rightOf(document.getElementById(agentNodeId))], ms);
+    hidePacket(pv);
+
+    // Atlas vector search
+    const pa = spawnPacket('#00ed64');
+    showPacket(pa, rightOf(document.getElementById(agentNodeId)));
+    await hop(pa, [leftOf(document.getElementById('n-atlas'))], ms);
+    glow('n-atlas', 'glow-mongo');
+    await new Promise(r => setTimeout(r, ms * 0.4));
+    await hop(pa, [rightOf(document.getElementById(agentNodeId))], ms);
+    hidePacket(pa);
+
+  } else if (type === 'reservations') {
+    setStep('6 / 8 — Reservations agent: CRUD to MongoDB');
+    showInfo('⑥ Tool: create_reservation', 'The reservations agent generates a PNR via generatePNR(), inserts the document into amadeus_db.reservations, and saves the PNR to the user\'s long-term memory.');
+
+    const pr = spawnPacket('#10b981');
+    showPacket(pr, rightOf(document.getElementById(agentNodeId)));
+    await hop(pr, [leftOf(document.getElementById('n-resvdb'))], ms);
+    glow('n-resvdb', 'glow-res');
+    await new Promise(r => setTimeout(r, ms * 0.4));
+    await hop(pr, [rightOf(document.getElementById(agentNodeId))], ms);
+    hidePacket(pr);
+
+  } else {
+    setStep('6 / 8 — Policy agent: vector search on policy documents');
+    showInfo('⑥ Tool: search_policy', 'The policy agent embeds the question via Voyage AI then runs $vectorSearch on amadeus_db.amadeus_policies. Change fees and refund rules use MongoDB aggregation pipelines on the fares collection.');
+
+    const pv2 = spawnPacket('#f97316');
+    showPacket(pv2, rightOf(document.getElementById(agentNodeId)));
+    await hop(pv2, [leftOf(document.getElementById('n-voyage'))], ms);
+    await new Promise(r => setTimeout(r, ms * 0.3));
+    await hop(pv2, [rightOf(document.getElementById(agentNodeId))], ms);
+    hidePacket(pv2);
+
+    const pa2 = spawnPacket('#00ed64');
+    showPacket(pa2, rightOf(document.getElementById(agentNodeId)));
+    await hop(pa2, [leftOf(document.getElementById('n-atlas'))], ms);
+    await new Promise(r => setTimeout(r, ms * 0.3));
+    await hop(pa2, [rightOf(document.getElementById(agentNodeId))], ms);
+    hidePacket(pa2);
+  }
+
+  // ── STEP 7: Checkpointer saves state ──────────────────────────────────────
+  setStep('7 / 8 — MongoDBSaver checkpoints conversation state');
+  showInfo('⑦ Short-term memory checkpoint', 'After each agent node step, MongoDBSaver writes the full LangGraph state (messages, tool calls, results) to agent_memory.checkpoints, keyed by threadId. Resuming the same threadId restores history.');
+  const ps = spawnPacket('#ec4899');
+  showPacket(ps, rightOf(document.getElementById(agentNodeId)));
+  await hop(ps, [leftOf(document.getElementById('n-stmem'))], ms);
+  glow('n-stmem', 'glow-mem');
+  await new Promise(r => setTimeout(r, ms * 0.3));
+  hidePacket(ps);
+  ungAgent();
+
+  // ── STEP 8: save_memories + response back to browser ──────────────────────
+  setStep('8 / 8 — save_memories → response back to browser');
+  showInfo('⑧ save_memories + response', 'The orchestrator writes last_query and a profile update to MongoDBStore (long-term memory). Then { response, agent } travels back through Express to the browser, where the UI shows the colour-coded agent badge.');
+
+  const pm = spawnPacket('#a855f7');
+  showPacket(pm, rightOf(document.getElementById('n-orch')));
+  await hop(pm, [leftOf(document.getElementById('n-ltmem'))], ms);
+  await new Promise(r => setTimeout(r, ms * 0.3));
+  hidePacket(pm);
+
+  const ungOrch2 = glow('n-orch', 'glow-orch');
+  const pr2 = spawnPacket('#0070f3');
+  showPacket(pr2, leftOf(document.getElementById('n-orch')));
+  await hop(pr2, [rightOf(document.getElementById('n-express'))], ms);
+  ungOrch2();
+  await hop(pr2, [rightOf(document.getElementById('n-browser'))], ms);
+  hidePacket(pr2);
+
+  setStep('✓ complete');
+  showInfo('✅ Complete', `The full round-trip is done. The user sees the answer with a ${type === 'fares' ? '✈️ Fares' : type === 'reservations' ? '📋 Reservations' : '📖 Policy'} badge. Their preferences are now stored in long-term memory for future sessions.`);
+
+  animRunning = false;
+  disableBtns(false);
+}
+
+function resetAll() {
+  animRunning = false;
+  pktPool.forEach(p => { if (p.parentNode) p.remove(); });
+  pktPool = [];
+  resetGlows();
+  setStep('idle');
+  hideInfo();
+  disableBtns(false);
+}
+
+function resetGlows() {
+  ['n-browser','n-express','n-orch','n-router','n-fares','n-res','n-pol',
+   'n-atlas','n-resvdb','n-voyage','n-stmem','n-ltmem','n-mcp'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.className = 'node';
+  });
+}
+
+function disableBtns(on) {
+  ['btn-fares','btn-reservations','btn-policy'].forEach(cls => {
+    document.querySelectorAll('.' + cls).forEach(b => b.disabled = on);
+  });
+}
+
+window.addEventListener('load', () => {
+  drawStaticLines();
+});
+
+window.addEventListener('resize', () => {
+  drawStaticLines();
+});
+</script>
+</body>
+</html>

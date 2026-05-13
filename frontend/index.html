@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Amadeus AI Assistant</title>
+  <style>
+    /* ─── Reset & Variables ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --amadeus-dark:   #00205B;
+      --amadeus-mid:    #003580;
+      --amadeus-blue:   #0070F3;
+      --amadeus-light:  #E8F0FE;
+      --sidebar-bg:     #0F1A2E;
+      --sidebar-hover:  #1A2C48;
+      --sidebar-active: #1D3557;
+      --bg:             #F1F5F9;
+      --surface:        #FFFFFF;
+      --border:         #E2E8F0;
+      --text-primary:   #0F172A;
+      --text-secondary: #64748B;
+      --text-muted:     #94A3B8;
+      --user-bubble:    #0070F3;
+      --agent-fares:       #0EA5E9;
+      --agent-reservations:#10B981;
+      --agent-policy:      #F59E0B;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.10);
+      --radius:    12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      height: 100dvh;
+      overflow: hidden;
+      display: flex;
+    }
+
+    /* ─── Sidebar ────────────────────────────────────────────────────── */
+    #sidebar {
+      width: 270px;
+      min-width: 270px;
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      color: #fff;
+      height: 100dvh;
+    }
+
+    .sidebar-header {
+      padding: 20px 16px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: var(--amadeus-blue);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+
+    .logo-text { font-size: 15px; font-weight: 700; line-height: 1.2; }
+    .logo-sub  { font-size: 10px; color: rgba(255,255,255,.45); letter-spacing: .8px; text-transform: uppercase; }
+
+    #new-chat-btn {
+      width: 100%;
+      padding: 9px 14px;
+      background: rgba(0,112,243,.25);
+      border: 1px solid rgba(0,112,243,.4);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 8px;
+      transition: background .15s;
+    }
+    #new-chat-btn:hover { background: rgba(0,112,243,.45); }
+
+    .section-label {
+      padding: 12px 16px 4px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.3);
+    }
+
+    #thread-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 8px;
+    }
+
+    #thread-list::-webkit-scrollbar { width: 4px; }
+    #thread-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+
+    .thread-item {
+      padding: 10px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 2px;
+      transition: background .12s;
+    }
+    .thread-item:hover   { background: var(--sidebar-hover); }
+    .thread-item.active  { background: var(--sidebar-active); }
+
+    .thread-title {
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: rgba(255,255,255,.9);
+    }
+
+    .thread-meta {
+      font-size: 11px;
+      color: rgba(255,255,255,.35);
+      margin-top: 2px;
+      display: flex; gap: 6px; align-items: center;
+    }
+
+    .thread-agent-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .sidebar-footer {
+      padding: 14px 16px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+
+    .user-info {
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .user-avatar {
+      width: 32px; height: 32px;
+      background: var(--amadeus-mid);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .user-details { flex: 1; min-width: 0; }
+    .user-id-label { font-size: 10px; color: rgba(255,255,255,.35); }
+    .user-id-value {
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255,255,255,.75);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ─── Main area ──────────────────────────────────────────────────── */
+    #chat-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    /* ─── Header ─────────────────────────────────────────────────────── */
+    #chat-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    #chat-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .agent-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .agent-tag.fares        { background: #E0F2FE; color: #0369A1; }
+    .agent-tag.reservations { background: #D1FAE5; color: #065F46; }
+    .agent-tag.policy       { background: #FEF3C7; color: #92400E; }
+
+    /* ─── Messages ───────────────────────────────────────────────────── */
+    #messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    #messages-container::-webkit-scrollbar { width: 6px; }
+    #messages-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ─── Welcome screen ─────────────────────────────────────────────── */
+    #welcome-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .welcome-icon {
+      font-size: 52px;
+      margin-bottom: 16px;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,.12));
+    }
+
+    .welcome-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .welcome-sub {
+      font-size: 14px;
+      color: var(--text-secondary);
+      max-width: 420px;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    .suggestions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .suggestion-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      cursor: pointer;
+      text-align: left;
+      transition: all .15s;
+      box-shadow: var(--shadow-sm);
+    }
+    .suggestion-card:hover {
+      border-color: var(--amadeus-blue);
+      box-shadow: 0 0 0 3px rgba(0,112,243,.08);
+    }
+
+    .suggestion-icon  { font-size: 20px; margin-bottom: 6px; }
+    .suggestion-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .suggestion-sub   { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+    /* ─── Message bubbles ─────────────────────────────────────────────── */
+    .message-group { display: flex; flex-direction: column; margin-bottom: 16px; }
+    .message-group.user  { align-items: flex-end; }
+    .message-group.bot   { align-items: flex-start; }
+
+    .message-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .bubble {
+      max-width: 72%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      line-height: 1.65;
+      font-size: 14px;
+      word-break: break-word;
+    }
+
+    .message-group.user .bubble {
+      background: var(--user-bubble);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message-group.bot .bubble {
+      background: var(--surface);
+      color: var(--text-primary);
+      border-bottom-left-radius: 4px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Markdown rendering inside bot bubbles */
+    .bubble h1, .bubble h2, .bubble h3 {
+      font-size: 14px; font-weight: 700; margin: 10px 0 4px;
+    }
+    .bubble strong { font-weight: 700; }
+    .bubble em     { font-style: italic; }
+    .bubble ul, .bubble ol { padding-left: 20px; margin: 8px 0; }
+    .bubble li     { margin: 3px 0; }
+    .bubble code   {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      background: #F1F5F9;
+      padding: 1px 5px;
+      border-radius: 4px;
+      color: #c7254e;
+    }
+    .bubble pre {
+      background: #F8FAFC;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      overflow-x: auto;
+      margin: 8px 0;
+      font-size: 12px;
+    }
+    .bubble pre code { background: none; padding: 0; color: inherit; }
+    .bubble a { color: var(--amadeus-blue); text-decoration: underline; }
+    .bubble table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 12px; }
+    .bubble th, .bubble td { border: 1px solid var(--border); padding: 6px 10px; }
+    .bubble th { background: #F8FAFC; font-weight: 600; }
+    .bubble p  { margin: 6px 0; }
+    .bubble p:first-child { margin-top: 0; }
+    .bubble p:last-child  { margin-bottom: 0; }
+
+    /* ─── Loading dots ────────────────────────────────────────────────── */
+    .loading-bubble {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      border-bottom-left-radius: 4px;
+      padding: 14px 18px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .dot {
+      width: 7px; height: 7px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      animation: bounce 1.3s ease-in-out infinite;
+    }
+    .dot:nth-child(2) { animation-delay: .18s; }
+    .dot:nth-child(3) { animation-delay: .36s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30%            { transform: translateY(-6px); }
+    }
+
+    /* ─── Routing badge (inside bot bubble) ───────────────────────────── */
+    .routing-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 8px;
+    }
+
+    .routing-badge.fares        { background: #E0F2FE; color: #0369A1; }
+    .routing-badge.reservations { background: #D1FAE5; color: #065F46; }
+    .routing-badge.policy       { background: #FEF3C7; color: #92400E; }
+
+    /* ─── Input area ─────────────────────────────────────────────────── */
+    #input-area {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
+
+    #message-input {
+      flex: 1;
+      resize: none;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text-primary);
+      background: var(--bg);
+      outline: none;
+      max-height: 140px;
+      min-height: 44px;
+      line-height: 1.5;
+      transition: border-color .15s;
+    }
+    #message-input:focus { border-color: var(--amadeus-blue); }
+    #message-input::placeholder { color: var(--text-muted); }
+
+    #send-btn {
+      width: 44px; height: 44px;
+      background: var(--amadeus-blue);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s, transform .1s;
+      color: #fff;
+    }
+    #send-btn:hover   { background: #005AD1; }
+    #send-btn:active  { transform: scale(.94); }
+    #send-btn:disabled { background: var(--border); cursor: not-allowed; }
+
+    /* ─── Responsive ─────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      #sidebar { display: none; }
+      .bubble  { max-width: 90%; }
+      .suggestions { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── Sidebar ─────────────────────────────────────────────────────────── -->
+<aside id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <div class="logo-icon">✈️</div>
+      <div>
+        <div class="logo-text">Amadeus AI</div>
+        <div class="logo-sub">Flight Assistant</div>
+      </div>
+    </div>
+    <button id="new-chat-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New conversation
+    </button>
+  </div>
+
+  <div class="section-label">Recent conversations</div>
+  <div id="thread-list"></div>
+
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div class="user-details">
+        <div class="user-id-label">Session User</div>
+        <div class="user-id-value" id="user-id-display">—</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ─── Main chat ────────────────────────────────────────────────────────── -->
+<main id="chat-main">
+
+  <div id="chat-header">
+    <div id="chat-title">New conversation</div>
+    <div id="header-agent-tag"></div>
+  </div>
+
+  <div id="messages-container">
+
+    <!-- Welcome screen -->
+    <div id="welcome-screen">
+      <div class="welcome-icon">✈️</div>
+      <h1 class="welcome-title">Amadeus Flight Assistant</h1>
+      <p class="welcome-sub">
+        Ask about flight fares, make a reservation, or look up Amadeus booking policies.
+        The AI automatically routes your question to the right specialist.
+      </p>
+
+      <div class="suggestions">
+        <div class="suggestion-card" data-query="Find me the cheapest economy fares from Madrid to London">
+          <div class="suggestion-icon">🔍</div>
+          <div class="suggestion-title">Search fares</div>
+          <div class="suggestion-sub">Cheapest MAD → LHR economy fares</div>
+        </div>
+        <div class="suggestion-card" data-query="I want to book a business class seat on flight IB3162 from Madrid to London on 2026-07-15">
+          <div class="suggestion-icon">📋</div>
+          <div class="suggestion-title">Make a reservation</div>
+          <div class="suggestion-sub">Book a business class flight</div>
+        </div>
+        <div class="suggestion-card" data-query="What is the refund policy for non-refundable economy tickets?">
+          <div class="suggestion-icon">📖</div>
+          <div class="suggestion-title">Refund policy</div>
+          <div class="suggestion-sub">Non-refundable economy ticket rules</div>
+        </div>
+        <div class="suggestion-card" data-query="Compare fares between Paris CDG and New York JFK across all cabin classes">
+          <div class="suggestion-icon">💰</div>
+          <div class="suggestion-title">Compare fares</div>
+          <div class="suggestion-sub">CDG → JFK pricing across all cabins</div>
+        </div>
+        <div class="suggestion-card" data-query="What are the change fee rules for business class fares?">
+          <div class="suggestion-icon">✏️</div>
+          <div class="suggestion-title">Change fees</div>
+          <div class="suggestion-sub">Business class modification policies</div>
+        </div>
+        <div class="suggestion-card" data-query="What baggage allowance do I get on Iberia economy fares?">
+          <div class="suggestion-icon">🧳</div>
+          <div class="suggestion-title">Baggage rules</div>
+          <div class="suggestion-sub">Iberia economy baggage allowance</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages injected here -->
+    <div id="messages"></div>
+  </div>
+
+  <div id="input-area">
+    <textarea
+      id="message-input"
+      rows="1"
+      placeholder="Ask about flights, reservations, or policies…"
+    ></textarea>
+    <button id="send-btn" title="Send (Enter)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+
+</main>
+
+<script>
+  // ─── State ──────────────────────────────────────────────────────────────────
+  const STORAGE_KEY = 'amadeus_ai_state';
+
+  const state = {
+    userId: '',
+    currentThreadId: null,
+    threads: [],        // [{ id, title, messages[], lastAgent, createdAt }]
+    isLoading: false,
+  };
+
+  // ─── Init ────────────────────────────────────────────────────────────────────
+  function initApp() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        state.userId   = parsed.userId   || generateUserId();
+        state.threads  = parsed.threads  || [];
+      } catch { state.userId = generateUserId(); }
+    } else {
+      state.userId = generateUserId();
+    }
+
+    renderUserInfo();
+    renderThreadList();
+    setupEventListeners();
+    autoResizeInput();
+  }
+
+  function generateUserId() {
+    return 'user_' + Math.random().toString(36).slice(2, 10);
+  }
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      userId:  state.userId,
+      threads: state.threads.slice(0, 30),  // keep last 30 threads
+    }));
+  }
+
+  // ─── UI helpers ──────────────────────────────────────────────────────────────
+  function renderUserInfo() {
+    document.getElementById('user-id-display').textContent = state.userId;
+    document.getElementById('user-avatar').textContent =
+      state.userId.slice(5, 7).toUpperCase();
+  }
+
+  function agentLabel(agent) {
+    const map = { fares: '✈️ Fares', reservations: '📋 Reservations', policy: '📖 Policy' };
+    return map[agent] || agent;
+  }
+
+  function agentColor(agent) {
+    const map = { fares: '#0EA5E9', reservations: '#10B981', policy: '#F59E0B' };
+    return map[agent] || '#94A3B8';
+  }
+
+  function renderThreadList() {
+    const list = document.getElementById('thread-list');
+    list.innerHTML = '';
+
+    if (!state.threads.length) {
+      list.innerHTML = '<div style="padding:12px 10px;font-size:12px;color:rgba(255,255,255,.3);text-align:center;">No conversations yet</div>';
+      return;
+    }
+
+    [...state.threads].reverse().forEach(thread => {
+      const item = document.createElement('div');
+      item.className = 'thread-item' + (thread.id === state.currentThreadId ? ' active' : '');
+      item.dataset.id = thread.id;
+
+      const dotColor = agentColor(thread.lastAgent);
+      item.innerHTML = `
+        <div class="thread-title">${escapeHtml(thread.title)}</div>
+        <div class="thread-meta">
+          ${thread.lastAgent ? `<span class="thread-agent-dot" style="background:${dotColor}"></span>${agentLabel(thread.lastAgent)}` : ''}
+          <span>${formatTime(thread.createdAt)}</span>
+        </div>
+      `;
+      item.addEventListener('click', () => loadThread(thread.id));
+      list.appendChild(item);
+    });
+  }
+
+  function renderHeaderAgent(agent) {
+    const tag = document.getElementById('header-agent-tag');
+    if (!agent) { tag.innerHTML = ''; return; }
+    tag.innerHTML = `<span class="agent-tag ${agent}">${agentLabel(agent)}</span>`;
+  }
+
+  function formatTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const now = new Date();
+    const diffMs = now - d;
+    if (diffMs < 60000)    return 'just now';
+    if (diffMs < 3600000)  return Math.floor(diffMs / 60000) + 'm ago';
+    if (diffMs < 86400000) return Math.floor(diffMs / 3600000) + 'h ago';
+    return d.toLocaleDateString();
+  }
+
+  // ─── Thread management ────────────────────────────────────────────────────────
+  function startNewChat() {
+    state.currentThreadId = null;
+    document.getElementById('chat-title').textContent = 'New conversation';
+    document.getElementById('messages').innerHTML = '';
+    document.getElementById('welcome-screen').style.display = 'flex';
+    document.getElementById('header-agent-tag').innerHTML = '';
+    renderThreadList();
+  }
+
+  function loadThread(threadId) {
+    const thread = state.threads.find(t => t.id === threadId);
+    if (!thread) return;
+
+    state.currentThreadId = threadId;
+    document.getElementById('chat-title').textContent = thread.title;
+    document.getElementById('welcome-screen').style.display = 'none';
+
+    const msgContainer = document.getElementById('messages');
+    msgContainer.innerHTML = '';
+
+    thread.messages.forEach(msg => {
+      appendMessage(msg.role, msg.content, msg.agent, false);
+    });
+
+    renderHeaderAgent(thread.lastAgent);
+    renderThreadList();
+    scrollToBottom();
+  }
+
+  // ─── Markdown renderer ────────────────────────────────────────────────────────
+  function renderMarkdown(text) {
+    // Escape HTML first (excluding intentional markdown)
+    let html = text
+      // Code blocks (``` ```)
+      .replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) =>
+        `<pre><code>${escapeHtml(code.trim())}</code></pre>`)
+      // Inline code
+      .replace(/`([^`]+)`/g, (_, code) => `<code>${escapeHtml(code)}</code>`)
+      // Headers
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm,  '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm,   '<h1>$1</h1>')
+      // Bold & italic
+      .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+      .replace(/\*\*(.+?)\*\*/g,     '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g,         '<em>$1</em>')
+      // Unordered lists
+      .replace(/^\s*[-•*]\s+(.+)$/gm, '<li>$1</li>')
+      // Ordered lists
+      .replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>')
+      // Horizontal rules
+      .replace(/^---$/gm, '<hr />')
+      // Paragraphs / line breaks
+      .replace(/\n\n+/g, '</p><p>')
+      .replace(/\n/g, '<br />');
+
+    // Wrap consecutive <li> in <ul>
+    html = html.replace(/((<li>.*?<\/li>)+)/gs, '<ul>$1</ul>');
+
+    // Wrap in <p> if not already a block element
+    if (!html.startsWith('<')) html = '<p>' + html + '</p>';
+    return html;
+  }
+
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ─── Message rendering ────────────────────────────────────────────────────────
+  function appendMessage(role, content, agent, scroll = true) {
+    const welcomeScreen = document.getElementById('welcome-screen');
+    welcomeScreen.style.display = 'none';
+
+    const container = document.getElementById('messages');
+    const group = document.createElement('div');
+    group.className = `message-group ${role}`;
+
+    if (role === 'user') {
+      group.innerHTML = `
+        <div class="message-meta">You</div>
+        <div class="bubble">${escapeHtml(content)}</div>
+      `;
+    } else {
+      const badge = agent
+        ? `<div class="routing-badge ${agent}">${agentLabel(agent)}</div>`
+        : '';
+      group.innerHTML = `
+        <div class="message-meta">Amadeus AI</div>
+        <div class="bubble">${badge}${renderMarkdown(content)}</div>
+      `;
+    }
+
+    container.appendChild(group);
+    if (scroll) scrollToBottom();
+    return group;
+  }
+
+  function showLoading() {
+    const container = document.getElementById('messages');
+    const loader = document.createElement('div');
+    loader.className = 'message-group bot';
+    loader.id = 'loading-indicator';
+    loader.innerHTML = `
+      <div class="message-meta">Amadeus AI</div>
+      <div class="loading-bubble">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+    `;
+    container.appendChild(loader);
+    scrollToBottom();
+  }
+
+  function hideLoading() {
+    document.getElementById('loading-indicator')?.remove();
+  }
+
+  function scrollToBottom() {
+    const c = document.getElementById('messages-container');
+    c.scrollTop = c.scrollHeight;
+  }
+
+  // ─── Send message ─────────────────────────────────────────────────────────────
+  async function sendMessage(text) {
+    text = text.trim();
+    if (!text || state.isLoading) return;
+
+    state.isLoading = true;
+    document.getElementById('send-btn').disabled = true;
+    document.getElementById('message-input').value = '';
+    resetInputHeight();
+
+    // If new thread, set up the state
+    if (!state.currentThreadId) {
+      state.currentThreadId = generateThreadId();
+      const thread = {
+        id: state.currentThreadId,
+        title: text.slice(0, 50) + (text.length > 50 ? '…' : ''),
+        messages: [],
+        lastAgent: null,
+        createdAt: new Date().toISOString(),
+      };
+      state.threads.push(thread);
+      document.getElementById('chat-title').textContent = thread.title;
+    }
+
+    // Append user message
+    appendMessage('user', text);
+
+    // Find thread & persist message
+    const thread = state.threads.find(t => t.id === state.currentThreadId);
+    thread.messages.push({ role: 'user', content: text, agent: null });
+
+    showLoading();
+
+    try {
+      const isNew = thread.messages.filter(m => m.role === 'user').length === 1;
+      const url = isNew
+        ? '/chat'
+        : `/chat/${state.currentThreadId}`;
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, userId: state.userId }),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      hideLoading();
+
+      const { response, agent, threadId } = data;
+
+      // Update threadId if server assigned one (new chat)
+      if (threadId && isNew) {
+        state.currentThreadId = threadId;
+        thread.id = threadId;
+      }
+
+      thread.lastAgent = agent;
+      thread.messages.push({ role: 'bot', content: response, agent });
+
+      appendMessage('bot', response, agent);
+      renderHeaderAgent(agent);
+      renderThreadList();
+      saveState();
+
+    } catch (err) {
+      hideLoading();
+      appendMessage('bot', `Sorry, something went wrong: ${err.message}. Please try again.`, null);
+    } finally {
+      state.isLoading = false;
+      document.getElementById('send-btn').disabled = false;
+      document.getElementById('message-input').focus();
+    }
+  }
+
+  function generateThreadId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
+  // ─── Input auto-resize ─────────────────────────────────────────────────────────
+  function autoResizeInput() {
+    const input = document.getElementById('message-input');
+    input.addEventListener('input', () => {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 140) + 'px';
+    });
+  }
+
+  function resetInputHeight() {
+    const input = document.getElementById('message-input');
+    input.style.height = 'auto';
+  }
+
+  // ─── Event listeners ───────────────────────────────────────────────────────────
+  function setupEventListeners() {
+    // New chat button
+    document.getElementById('new-chat-btn').addEventListener('click', startNewChat);
+
+    // Send button
+    document.getElementById('send-btn').addEventListener('click', () => {
+      const text = document.getElementById('message-input').value;
+      sendMessage(text);
+    });
+
+    // Enter to send (Shift+Enter for newline)
+    document.getElementById('message-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const text = e.target.value;
+        sendMessage(text);
+      }
+    });
+
+    // Suggestion cards
+    document.querySelectorAll('.suggestion-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const query = card.dataset.query;
+        document.getElementById('message-input').value = query;
+        sendMessage(query);
+      });
+    });
+  }
+
+  // ─── Boot ───────────────────────────────────────────────────────────────────────
+  initApp();
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "ts-node": {
+    "esm": false,
+    "transpileOnly": true,
+    "compilerOptions": {
+      "module": "commonjs",
+      "moduleResolution": "node",
+      "esModuleInterop": true
+    }
+  }
+}
