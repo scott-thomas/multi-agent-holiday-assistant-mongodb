@@ -42,6 +42,12 @@ resource "null_resource" "seed_database" {
     command = <<-BASH
       set -euo pipefail
 
+      # Atlas takes up to 60s to propagate a newly created database user across
+      # the replica set. Without this wait the seed script hits code 18
+      # (AuthenticationFailed) because the credentials aren't active yet.
+      echo "Waiting 60s for Atlas user credentials to propagate..."
+      sleep 60
+
       echo "Installing Node.js dependencies (if needed)..."
       npm install --prefer-offline 2>&1 | tail -5
 
