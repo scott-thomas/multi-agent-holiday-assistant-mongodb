@@ -167,7 +167,7 @@ No Voyage AI API key is needed — Atlas handles embedding server-side.
     "path": "value.content",
     "model": "voyage-4"
   },
-  { "type": "filter", "path": "namespace" }
+  { "type": "filter", "path": "namespacePath" }
 ]
 ```
 

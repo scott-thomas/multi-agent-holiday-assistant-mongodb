@@ -39,6 +39,7 @@ import {
   searchFormattedMemories,
   recordInteractionSummary,
 } from "../memory/memory-api";
+import { traceStep, emitStep } from "../shared/tracer";
 import "dotenv/config";
 
 // ─── Graph State ─────────────────────────────────────────────────────────────
@@ -116,12 +117,24 @@ export async function callPolicyAgent(
     async ({ category }) => {
       console.log("[Policy Agent] get_policy_by_category:", category);
 
-      const docs = await policyCollection
-        .find(
-          { "metadata.category": category },
-          { projection: { _id: 0 } }
-        )
-        .toArray();
+      const docs = await traceStep(
+        {
+          phase: "mongodb",
+          title: `Fetch policies · ${category}`,
+          detail: `find on travel_policies · category = ${category}`,
+          db: DB_NAMES.HOLIDAY,
+          collection: COLLECTIONS.POLICIES,
+          agent: "policy",
+        },
+        () =>
+          policyCollection
+            .find(
+              { "metadata.category": category },
+              { projection: { _id: 0 } }
+            )
+            .toArray(),
+        (r) => ({ detail: `Found ${r.length} policy document(s) for ${category}` })
+      );
 
       if (!docs.length) {
         return `No policy documents found for category: ${category}.`;
@@ -154,9 +167,21 @@ export async function callPolicyAgent(
     async ({ booking_ref }) => {
       console.log("[Policy Agent] get_cancellation_terms:", booking_ref);
 
-      const booking = await bookingsCollection.findOne(
-        { booking_ref: booking_ref.toUpperCase() },
-        { projection: { _id: 0 } }
+      const booking = await traceStep(
+        {
+          phase: "mongodb",
+          title: "Look up booking for cancellation terms",
+          detail: `findOne on bookings · ref ${booking_ref.toUpperCase()}`,
+          db: DB_NAMES.HOLIDAY,
+          collection: COLLECTIONS.BOOKINGS,
+          agent: "policy",
+        },
+        () =>
+          bookingsCollection.findOne(
+            { booking_ref: booking_ref.toUpperCase() },
+            { projection: { _id: 0 } }
+          ),
+        (b) => ({ detail: b ? `Found booking ${booking_ref.toUpperCase()}` : `No booking ${booking_ref.toUpperCase()}` })
       );
 
       if (!booking) {
@@ -330,6 +355,14 @@ Available tools: {tool_names}`,
   function shouldContinue(state: typeof PolicyState.State) {
     const last = state.messages[state.messages.length - 1] as AIMessage;
     const next = last.tool_calls?.length ? "tools" : "__end__";
+    if (next === "tools") {
+      emitStep({
+        phase: "agent",
+        title: `Policy agent calling: ${last.tool_calls!.map((tc) => tc.name).join(", ")}`,
+        detail: "gpt-4o selected tools to check rules and compliance",
+        agent: "policy",
+      });
+    }
     console.log(
       `[Policy Agent] → shouldContinue: ${next}${
         next === "tools" ? ` (${last.tool_calls!.map((tc) => tc.name).join(", ")})` : ""

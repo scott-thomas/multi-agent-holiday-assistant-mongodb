@@ -402,6 +402,209 @@
     .routing-badge.transport   { background: #dbeafe; color: #1d4ed8; }
     .routing-badge.policy      { background: #f3e8ff; color: #7e22ce; }
 
+    /* ─── Execution trace (live steps) ────────────────────────────────── */
+    .trace {
+      --phase: var(--text-muted);
+      width: 100%;
+      max-width: 72%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      overflow: hidden;
+      transition: border-color .25s ease, box-shadow .25s ease;
+    }
+    /* Becomes the focal point only while work is streaming in. */
+    .trace.is-live {
+      border-color: rgba(5,150,105,.45);
+      box-shadow: 0 0 0 3px rgba(5,150,105,.07), 0 6px 20px rgba(15,23,42,.06);
+    }
+
+    .trace-header {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .trace.collapsed .trace-header { border-bottom: none; }
+
+    .trace-pulse {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      flex-shrink: 0;
+      transition: background .25s;
+    }
+    .trace.is-live .trace-pulse {
+      background: var(--primary);
+      box-shadow: 0 0 0 0 rgba(5,150,105,.5);
+      animation: tracePulse 1.6s ease-out infinite;
+    }
+    @keyframes tracePulse {
+      0%   { box-shadow: 0 0 0 0 rgba(5,150,105,.45); }
+      70%  { box-shadow: 0 0 0 6px rgba(5,150,105,0); }
+      100% { box-shadow: 0 0 0 0 rgba(5,150,105,0); }
+    }
+
+    .trace-title {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      flex: 1;
+    }
+
+    .trace-count {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .trace-chevron {
+      color: var(--text-muted);
+      transition: transform .2s;
+    }
+    .trace.collapsed .trace-chevron { transform: rotate(-90deg); }
+
+    .trace-body {
+      padding: 4px 12px 10px;
+      display: flex;
+      flex-direction: column;
+      max-height: 440px;
+      overflow-y: auto;
+    }
+    .trace.collapsed .trace-body { display: none; }
+    .trace-body::-webkit-scrollbar { width: 5px; }
+    .trace-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .trace-step {
+      --phase: var(--text-muted);
+      display: flex;
+      gap: 11px;
+      padding: 5px 8px 5px 7px;
+      border-radius: 8px;
+      position: relative;
+      border-left: 2px solid transparent;
+      animation: stepIn .22s ease;
+    }
+    /* The currently-running step quietly draws focus. */
+    .trace-step.running {
+      background: rgba(5,150,105,.05);
+      border-left-color: var(--phase);
+    }
+
+    @keyframes stepIn {
+      from { opacity: 0; transform: translateY(-3px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-rail {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      padding-top: 4px;
+    }
+
+    .step-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--phase);
+      position: relative;
+    }
+    .step-dot.running {
+      background: transparent;
+      border: 1.5px solid var(--phase);
+    }
+    .step-dot.running::after {
+      content: '';
+      position: absolute;
+      inset: 1px;
+      border-radius: 50%;
+      background: var(--phase);
+      animation: dotPulse 1s ease-in-out infinite;
+    }
+    @keyframes dotPulse { 0%,100% { opacity: .25; transform: scale(.6); } 50% { opacity: 1; transform: scale(1); } }
+    .step-dot.error { background: #dc2626; }
+
+    .step-line {
+      width: 1.5px;
+      flex: 1;
+      min-height: 8px;
+      background: var(--border);
+      margin-top: 3px;
+    }
+    .trace-step:last-child .step-line { display: none; }
+
+    .step-main { flex: 1; min-width: 0; }
+
+    .step-top {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .step-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      line-height: 1.35;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .step-phase {
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      color: var(--phase);
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    /* Per-phase accent colour (drives dot + label + active highlight). */
+    .phase-orchestrator  { --phase: #d97706; }
+    .phase-llm           { --phase: #7c3aed; }
+    .phase-agent         { --phase: #2563eb; }
+    .phase-tool          { --phase: #2563eb; }
+    .phase-vector_search { --phase: #059669; }
+    .phase-memory        { --phase: #db2777; }
+    .phase-mongodb       { --phase: #059669; }
+
+    .step-duration {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+
+    .step-detail {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+      line-height: 1.4;
+    }
+
+    .step-ns {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 5px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 10.5px;
+      color: var(--text-secondary);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 2px 7px;
+      border-radius: 5px;
+    }
+    .step-ns .ns-index { color: var(--primary); font-weight: 600; }
+
     /* ─── Input area ─────────────────────────────────────────────────── */
     #input-area {
       background: var(--surface);
@@ -684,7 +887,7 @@
     msgContainer.innerHTML = '';
 
     thread.messages.forEach(msg => {
-      appendMessage(msg.role, msg.content, msg.agent, false);
+      appendMessage(msg.role, msg.content, msg.agent, false, msg.steps || null);
     });
 
     renderHeaderAgent(thread.lastAgent);
@@ -735,8 +938,107 @@
       .replace(/"/g, '&quot;');
   }
 
+  // ─── Execution trace rendering ────────────────────────────────────────────────
+  const PHASE_LABEL = {
+    orchestrator: 'Orchestrator',
+    llm: 'LLM',
+    agent: 'Agent',
+    tool: 'Tool',
+    vector_search: 'Vector Search',
+    memory: 'Memory',
+    mongodb: 'MongoDB',
+  };
+
+  function fmtDuration(ms) {
+    if (ms == null) return '';
+    if (ms < 1000) return ms + 'ms';
+    return (ms / 1000).toFixed(ms < 10000 ? 2 : 1) + 's';
+  }
+
+  function stepInner(step) {
+    const phase = step.phase || 'tool';
+    const status = step.status || 'done';
+
+    const dotClass = status === 'running' ? 'running' : status === 'error' ? 'error' : 'done';
+    const iconHtml = `<div class="step-dot ${dotClass}"></div>`;
+
+    const dur = step.durationMs != null
+      ? `<span class="step-duration">${fmtDuration(step.durationMs)}</span>` : '';
+
+    let ns = '';
+    if (step.db && step.collection) {
+      ns = `<div class="step-ns">${escapeHtml(step.db)}.${escapeHtml(step.collection)}` +
+        (step.index ? ` · <span class="ns-index">${escapeHtml(step.index)}</span>` : '') +
+        `</div>`;
+    }
+
+    const detail = step.detail
+      ? `<div class="step-detail">${escapeHtml(step.detail)}</div>` : '';
+
+    return `
+      <div class="step-rail">${iconHtml}<div class="step-line"></div></div>
+      <div class="step-main">
+        <div class="step-top">
+          <span class="step-title">${escapeHtml(step.title || '')}</span>
+          <span class="step-phase">${PHASE_LABEL[phase] || phase}</span>
+          ${dur}
+        </div>
+        ${detail}
+        ${ns}
+      </div>`;
+  }
+
+  /**
+   * Create a live trace panel. Returns helpers to push/update steps as they
+   * stream in, and to replay a stored list of steps.
+   */
+  function createTraceView(initialSteps) {
+    const wrap = document.createElement('div');
+    wrap.className = 'trace';
+
+    const header = document.createElement('div');
+    header.className = 'trace-header';
+    header.innerHTML = `
+      <div class="trace-pulse"></div>
+      <div class="trace-title">Execution trace</div>
+      <div class="trace-count">0 steps</div>
+      <svg class="trace-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    `;
+    const body = document.createElement('div');
+    body.className = 'trace-body';
+
+    header.addEventListener('click', () => wrap.classList.toggle('collapsed'));
+
+    wrap.appendChild(header);
+    wrap.appendChild(body);
+
+    const countEl = header.querySelector('.trace-count');
+    const stepEls = new Map();
+    let count = 0;
+
+    function upsert(step) {
+      let el = stepEls.get(step.id);
+      if (!el) {
+        el = document.createElement('div');
+        el.className = 'trace-step';
+        stepEls.set(step.id, el);
+        body.appendChild(el);
+        count += 1;
+        countEl.textContent = count + (count === 1 ? ' step' : ' steps');
+      }
+      el.className = `trace-step phase-${step.phase || 'tool'}` +
+        (step.status === 'running' ? ' running' : '');
+      el.innerHTML = stepInner(step);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    (initialSteps || []).forEach(upsert);
+
+    return { el: wrap, upsert };
+  }
+
   // ─── Message rendering ────────────────────────────────────────────────────────
-  function appendMessage(role, content, agent, scroll = true) {
+  function appendMessage(role, content, agent, scroll = true, steps = null) {
     const welcomeScreen = document.getElementById('welcome-screen');
     welcomeScreen.style.display = 'none';
 
@@ -750,13 +1052,21 @@
         <div class="bubble">${escapeHtml(content)}</div>
       `;
     } else {
+      group.innerHTML = `<div class="message-meta">Holiday AI</div>`;
+
+      if (steps && steps.length) {
+        const trace = createTraceView(steps);
+        trace.el.classList.add('collapsed');
+        group.appendChild(trace.el);
+      }
+
       const badge = agent
         ? `<div class="routing-badge ${agent}">${agentLabel(agent)}</div>`
         : '';
-      group.innerHTML = `
-        <div class="message-meta">Holiday AI</div>
-        <div class="bubble">${badge}${renderMarkdown(content)}</div>
-      `;
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.innerHTML = `${badge}${renderMarkdown(content)}`;
+      group.appendChild(bubble);
     }
 
     container.appendChild(group);
@@ -788,7 +1098,7 @@
     c.scrollTop = c.scrollHeight;
   }
 
-  // ─── Send message ─────────────────────────────────────────────────────────────
+  // ─── Send message (streaming with live execution trace) ───────────────────────
   async function sendMessage(text) {
     text = text.trim();
     if (!text || state.isLoading) return;
@@ -799,7 +1109,8 @@
     resetInputHeight();
 
     // If new thread, set up the state
-    if (!state.currentThreadId) {
+    const wasNew = !state.currentThreadId;
+    if (wasNew) {
       state.currentThreadId = generateThreadId();
       const thread = {
         id: state.currentThreadId,
@@ -815,48 +1126,118 @@
     // Append user message
     appendMessage('user', text);
 
-    // Find thread & persist message
     const thread = state.threads.find(t => t.id === state.currentThreadId);
     thread.messages.push({ role: 'user', content: text, agent: null });
 
-    showLoading();
+    // Determine if this is the first user turn (=> create new server thread)
+    const isNew = thread.messages.filter(m => m.role === 'user').length === 1;
+
+    // Build a live bot group: trace panel + (initially) a loading bubble.
+    document.getElementById('welcome-screen').style.display = 'none';
+    const container = document.getElementById('messages');
+    const group = document.createElement('div');
+    group.className = 'message-group bot';
+    group.innerHTML = `<div class="message-meta">Holiday AI</div>`;
+    const trace = createTraceView();
+    trace.el.classList.add('is-live');
+    group.appendChild(trace.el);
+    const loading = document.createElement('div');
+    loading.className = 'loading-bubble';
+    loading.innerHTML = `<div class="dot"></div><div class="dot"></div><div class="dot"></div>`;
+    group.appendChild(loading);
+    container.appendChild(group);
+    scrollToBottom();
+
+    const steps = [];
+
+    const handleEvent = (evt) => {
+      if (evt.type === 'step') {
+        trace.upsert(evt.step);
+        // keep the latest version of each step (running → done)
+        const idx = steps.findIndex(s => s.id === evt.step.id);
+        if (idx >= 0) steps[idx] = evt.step; else steps.push(evt.step);
+        scrollToBottom();
+      }
+    };
 
     try {
-      const isNew = thread.messages.filter(m => m.role === 'user').length === 1;
-      const url = isNew
-        ? '/chat'
-        : `/chat/${state.currentThreadId}`;
-
+      const url = isNew ? '/chat/stream' : `/chat/stream/${state.currentThreadId}`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text, userId: state.userId }),
       });
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 
-      hideLoading();
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let finalEvent = null;
+      let errorEvent = null;
 
-      const { response, agent, threadId } = data;
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
 
-      // Update threadId if server assigned one (new chat)
+        let nl;
+        while ((nl = buffer.indexOf('\n')) >= 0) {
+          const line = buffer.slice(0, nl).trim();
+          buffer = buffer.slice(nl + 1);
+          if (!line) continue;
+          let evt;
+          try { evt = JSON.parse(line); } catch { continue; }
+          if (evt.type === 'final') finalEvent = evt;
+          else if (evt.type === 'error') errorEvent = evt;
+          else handleEvent(evt);
+        }
+      }
+      // flush any trailing buffered line
+      if (buffer.trim()) {
+        try {
+          const evt = JSON.parse(buffer.trim());
+          if (evt.type === 'final') finalEvent = evt;
+          else if (evt.type === 'error') errorEvent = evt;
+          else handleEvent(evt);
+        } catch { /* ignore */ }
+      }
+
+      if (errorEvent) throw new Error(errorEvent.error || 'Server error');
+      if (!finalEvent) throw new Error('No response received');
+
+      const { response, agent, threadId } = finalEvent;
+
       if (threadId && isNew) {
         state.currentThreadId = threadId;
         thread.id = threadId;
       }
 
-      thread.lastAgent = agent;
-      thread.messages.push({ role: 'bot', content: response, agent });
+      // Replace the loading bubble with the rendered answer.
+      loading.remove();
+      trace.el.classList.remove('is-live');
+      trace.el.classList.add('collapsed');
+      const badge = agent ? `<div class="routing-badge ${agent}">${agentLabel(agent)}</div>` : '';
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.innerHTML = `${badge}${renderMarkdown(response)}`;
+      group.appendChild(bubble);
 
-      appendMessage('bot', response, agent);
+      thread.lastAgent = agent;
+      thread.messages.push({ role: 'bot', content: response, agent, steps });
+
       renderHeaderAgent(agent);
       renderThreadList();
       saveState();
+      scrollToBottom();
 
     } catch (err) {
-      hideLoading();
-      appendMessage('bot', `Sorry, something went wrong: ${err.message}. Please try again.`, null);
+      loading.remove();
+      trace.el.classList.remove('is-live');
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.innerHTML = renderMarkdown(`Sorry, something went wrong: ${err.message}. Please try again.`);
+      group.appendChild(bubble);
     } finally {
       state.isLoading = false;
       document.getElementById('send-btn').disabled = false;

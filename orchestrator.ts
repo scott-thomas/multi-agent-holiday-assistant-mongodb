@@ -34,6 +34,7 @@ import {
   putUserMemory,
 } from "./memory/memory-api";
 import { DB_NAMES, type AgentName } from "./shared/utils";
+import { emitStep } from "./shared/tracer";
 import "dotenv/config";
 
 // ─── Orchestrator State ───────────────────────────────────────────────────────
@@ -80,6 +81,11 @@ export async function callOrchestrator(
 
   async function loadMemories(_state: typeof OrchestratorState.State) {
     console.log(`[Orchestrator] → load_memories`);
+    emitStep({
+      phase: "orchestrator",
+      title: "Orchestrator received query",
+      detail: `Loading long-term memory before routing · user "${userId}"`,
+    });
     const memories = await searchFormattedMemories(store, userId, query);
     return { userMemories: memories };
   }
@@ -88,6 +94,11 @@ export async function callOrchestrator(
 
   async function classifyIntent(state: typeof OrchestratorState.State) {
     console.log(`[Orchestrator] → classify_intent`);
+    emitStep({
+      phase: "llm",
+      title: "Classifying intent",
+      detail: "gpt-4o-mini selecting the best specialist for this query",
+    });
     const systemPrompt = `You are the holiday planning assistant orchestrator. Route the user query to exactly one specialist:
 
 • "hotels"    – Searching for accommodation, comparing hotels, checking room pricing and availability,
@@ -115,6 +126,13 @@ ${state.userMemories}`;
     ]);
 
     console.log(`[Orchestrator] → "${result.agent}"  (${result.reasoning})`);
+    emitStep({
+      phase: "orchestrator",
+      title: `Routed to ${result.agent} specialist`,
+      detail: result.reasoning,
+      agent: result.agent,
+      meta: { reasoning: result.reasoning },
+    });
     return { selectedAgent: result.agent as AgentName };
   }
 
@@ -122,6 +140,12 @@ ${state.userMemories}`;
 
   async function callSpecialist(state: typeof OrchestratorState.State) {
     console.log(`[Orchestrator] → call_specialist (${state.selectedAgent})`);
+    emitStep({
+      phase: "agent",
+      title: `Handing off to ${state.selectedAgent} agent`,
+      detail: "Specialist agent is now planning tool calls to answer the query",
+      agent: state.selectedAgent ?? undefined,
+    });
     let response: string;
 
     switch (state.selectedAgent) {
@@ -148,6 +172,12 @@ ${state.userMemories}`;
 
   async function saveMemories(state: typeof OrchestratorState.State) {
     console.log(`[Orchestrator] → save_memories`);
+    emitStep({
+      phase: "memory",
+      title: "Persisting conversation memory",
+      detail: "Saving last query + refreshing user profile for future sessions",
+      agent: state.selectedAgent ?? undefined,
+    });
     await putUserMemory(store, userId, "last_query", {
       type: "fact",
       data: {

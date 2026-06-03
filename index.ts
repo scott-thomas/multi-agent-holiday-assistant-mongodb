@@ -20,6 +20,7 @@ import { MongoClient } from "mongodb";
 import { v4 as uuidv4 } from "uuid";
 import { callOrchestrator } from "./orchestrator";
 import { createStore } from "./memory/store";
+import { Tracer, runWithTracer, type TraceStep } from "./shared/tracer";
 import type { MongoDBStore } from "@langchain/langgraph-checkpoint-mongodb";
 
 const app: Express = express();
@@ -74,6 +75,85 @@ app.post("/chat", async (req: Request, res: Response, next: NextFunction) => {
   } catch (err) {
     next(err);
   }
+});
+
+/**
+ * Streaming chat — emits live execution-trace steps (NDJSON) as the request is
+ * processed, then a final `{ type: "final", ... }` line with the answer.
+ *
+ * Used by the frontend to show the audience every vector search, MongoDB
+ * operation, memory read/write and routing decision in real time.
+ *
+ * Line protocol (one JSON object per line):
+ *   { "type": "step",  "step": TraceStep }
+ *   { "type": "final", "threadId", "userId", "response", "agent" }
+ *   { "type": "error", "error": "..." }
+ */
+async function handleStreamingChat(
+  req: Request,
+  res: Response,
+  threadId: string,
+  isNew: boolean
+): Promise<void> {
+  const { message, userId } = req.body as { message?: string; userId?: string };
+
+  if (!message) {
+    res.status(400).json({ error: "message is required" });
+    return;
+  }
+  if (!userId) {
+    res.status(400).json({ error: "userId is required" });
+    return;
+  }
+
+  res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no"); // disable proxy buffering
+  res.flushHeaders?.();
+
+  const write = (obj: unknown) => {
+    res.write(JSON.stringify(obj) + "\n");
+    // @ts-expect-error flush exists when compression middleware is present
+    res.flush?.();
+  };
+
+  const tracer = new Tracer((step: TraceStep) => write({ type: "step", step }));
+
+  console.log(
+    `[POST stream] userId=${userId} threadId=${threadId} message="${message.slice(0, 80)}"`
+  );
+
+  try {
+    const result = await runWithTracer(tracer, () =>
+      callOrchestrator(mongoClient, store, message, threadId, userId)
+    );
+    write({
+      type: "final",
+      threadId,
+      userId,
+      response: result.response,
+      agent: result.agent,
+    });
+  } catch (err) {
+    console.error("[Stream Error]", err);
+    write({
+      type: "error",
+      error: err instanceof Error ? err.message : "Internal server error",
+    });
+  } finally {
+    res.end();
+  }
+}
+
+/** Start a new streamed conversation. */
+app.post("/chat/stream", (req: Request, res: Response) => {
+  void handleStreamingChat(req, res, uuidv4(), true);
+});
+
+/** Continue an existing streamed conversation by threadId. */
+app.post("/chat/stream/:threadId", (req: Request, res: Response) => {
+  void handleStreamingChat(req, res, req.params.threadId, false);
 });
 
 /**

@@ -124,7 +124,10 @@ resource "mongodbatlas_search_index" "memory_vector" {
       model    = "voyage-4"
     },
     # Per-user namespace isolation at the index filter level.
-    { type = "filter", path = "prefix" }
+    # MongoDBStore writes a `namespacePath` field on every document and filters
+    # $vectorSearch by { namespacePath: "<userId>/memories" }, so the pre-filter
+    # field MUST be named `namespacePath` (not `namespace`/`prefix`).
+    { type = "filter", path = "namespacePath" }
   ])
 
   depends_on = [

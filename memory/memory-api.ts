@@ -10,6 +10,7 @@
  */
 
 import { MongoDBStore } from "@langchain/langgraph-checkpoint-mongodb";
+import { traceStep, emitStep } from "../shared/tracer";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -40,10 +41,22 @@ export async function putUserMemory(
 ): Promise<void> {
   // `content` is read by the Atlas auto-embedding index (path: "value.content")
   // to generate the vector for this memory document server-side.
-  await store.put([userId, "memories"], key, {
-    ...value,
-    content: `[${value.type}] ${key}: ${JSON.stringify(value.data)}`,
-  });
+  await traceStep(
+    {
+      phase: "memory",
+      title: `Store long-term memory · ${key}`,
+      detail: `Upsert [${value.type}] into namespace [${userId}, "memories"] (auto-embedded server-side)`,
+      db: "agent_memory",
+      collection: "long_term_memory",
+      index: "memory_vector_index",
+      meta: { key, type: value.type, agentSource: value.agentSource },
+    },
+    () =>
+      store.put([userId, "memories"], key, {
+        ...value,
+        content: `[${value.type}] ${key}: ${JSON.stringify(value.data)}`,
+      })
+  );
 }
 
 // ─── Read ────────────────────────────────────────────────────────────────────
@@ -131,7 +144,24 @@ export async function searchFormattedMemories(
   limit = 5
 ): Promise<string> {
   try {
-    const results = await store.search([userId, "memories"], { query, limit });
+    const results = await traceStep(
+      {
+        phase: "memory",
+        title: "Recall long-term memory",
+        detail: `Semantic search of namespace [${userId}, "memories"] for relevant context`,
+        db: "agent_memory",
+        collection: "long_term_memory",
+        index: "memory_vector_index",
+        meta: { query: query.slice(0, 120), limit },
+      },
+      () => store.search([userId, "memories"], { query, limit }),
+      (r) => ({
+        detail: `Retrieved ${r?.length ?? 0} relevant memor${
+          (r?.length ?? 0) === 1 ? "y" : "ies"
+        } for this user`,
+        meta: { matches: r?.length ?? 0 },
+      })
+    );
 
     if (!results || results.length === 0) {
       return "No relevant memories found for this user.";
@@ -171,6 +201,14 @@ export async function recordInteractionSummary(
   agentName: string,
   summary: string
 ): Promise<void> {
+  emitStep({
+    phase: "memory",
+    title: `Summarise interaction · ${agentName}`,
+    detail: "Writing an interaction summary to long-term memory",
+    db: "agent_memory",
+    collection: "long_term_memory",
+    agent: agentName,
+  });
   await putUserMemory(store, userId, `last_${agentName}_interaction`, {
     type: "interaction_summary",
     data: { summary, agent: agentName },

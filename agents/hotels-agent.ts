@@ -42,6 +42,7 @@ import {
   recordInteractionSummary,
   updateUserProfile,
 } from "../memory/memory-api";
+import { traceStep, emitStep } from "../shared/tracer";
 import "dotenv/config";
 
 // ─── Graph State ─────────────────────────────────────────────────────────────
@@ -138,7 +139,18 @@ export async function callHotelsAgent(
         { $limit: 10 },
       ];
 
-      const results = await hotelsCollection.aggregate(pipeline).toArray();
+      const results = await traceStep(
+        {
+          phase: "mongodb",
+          title: "Aggregate hotels by destination",
+          detail: `$match + $unwind + $group pipeline on hotels${city ? ` · ${city}` : ""}`,
+          db: DB_NAMES.HOLIDAY,
+          collection: COLLECTIONS.HOTELS,
+          agent: "hotels",
+        },
+        () => hotelsCollection.aggregate(pipeline).toArray(),
+        (r) => ({ detail: `Returned ${r.length} hotel(s), cheapest-room first` })
+      );
       return results.length
         ? JSON.stringify(results)
         : `No hotels found in ${city ?? "the requested destination"}.`;
@@ -162,19 +174,31 @@ export async function callHotelsAgent(
     async ({ hotel_name, check_in, check_out }) => {
       console.log("[Hotels Agent] get_room_availability:", hotel_name);
 
-      const hotel = await hotelsCollection.findOne(
-        { "metadata.name": { $regex: hotel_name, $options: "i" } },
+      const hotel = await traceStep(
         {
-          projection: {
-            _id: 0,
-            "metadata.name": 1,
-            "metadata.room_types": 1,
-            "metadata.availability": 1,
-            "metadata.check_in_time": 1,
-            "metadata.check_out_time": 1,
-            "metadata.star_rating": 1,
-          },
-        }
+          phase: "mongodb",
+          title: "Look up room availability",
+          detail: `findOne on hotels · "${hotel_name}"`,
+          db: DB_NAMES.HOLIDAY,
+          collection: COLLECTIONS.HOTELS,
+          agent: "hotels",
+        },
+        () =>
+          hotelsCollection.findOne(
+            { "metadata.name": { $regex: hotel_name, $options: "i" } },
+            {
+              projection: {
+                _id: 0,
+                "metadata.name": 1,
+                "metadata.room_types": 1,
+                "metadata.availability": 1,
+                "metadata.check_in_time": 1,
+                "metadata.check_out_time": 1,
+                "metadata.star_rating": 1,
+              },
+            }
+          ),
+        (h) => ({ detail: h ? `Found "${hotel_name}" with room types` : `"${hotel_name}" not found` })
       );
 
       if (!hotel) {
@@ -266,7 +290,17 @@ export async function callHotelsAgent(
         updated_at: now,
       };
 
-      await bookingsCollection.insertOne(booking);
+      await traceStep(
+        {
+          phase: "mongodb",
+          title: "Create accommodation booking",
+          detail: `insertOne into bookings · ref ${bookingRef}`,
+          db: DB_NAMES.HOLIDAY,
+          collection: COLLECTIONS.BOOKINGS,
+          agent: "hotels",
+        },
+        () => bookingsCollection.insertOne(booking)
+      );
 
       await updateUserProfile(store, userId, {
         last_booking_ref: bookingRef,
@@ -307,9 +341,21 @@ export async function callHotelsAgent(
     async ({ booking_ref }) => {
       console.log("[Hotels Agent] get_booking:", booking_ref);
 
-      const doc = await bookingsCollection.findOne(
-        { booking_ref: booking_ref.toUpperCase() },
-        { projection: { _id: 0 } }
+      const doc = await traceStep(
+        {
+          phase: "mongodb",
+          title: "Retrieve booking",
+          detail: `findOne on bookings · ref ${booking_ref.toUpperCase()}`,
+          db: DB_NAMES.HOLIDAY,
+          collection: COLLECTIONS.BOOKINGS,
+          agent: "hotels",
+        },
+        () =>
+          bookingsCollection.findOne(
+            { booking_ref: booking_ref.toUpperCase() },
+            { projection: { _id: 0 } }
+          ),
+        (d) => ({ detail: d ? `Found booking ${booking_ref.toUpperCase()}` : `No booking ${booking_ref.toUpperCase()}` })
       );
 
       if (!doc) {
@@ -342,15 +388,26 @@ export async function callHotelsAgent(
         return `Booking ${booking_ref} is already cancelled.`;
       }
 
-      await bookingsCollection.updateOne(
-        { booking_ref: booking_ref.toUpperCase() },
+      await traceStep(
         {
-          $set: {
-            status: "CANCELLED",
-            cancellation_reason: reason ?? "Cancelled by guest request",
-            updated_at: new Date().toISOString(),
-          },
-        }
+          phase: "mongodb",
+          title: "Cancel booking",
+          detail: `updateOne on bookings · ref ${booking_ref.toUpperCase()} → CANCELLED`,
+          db: DB_NAMES.HOLIDAY,
+          collection: COLLECTIONS.BOOKINGS,
+          agent: "hotels",
+        },
+        () =>
+          bookingsCollection.updateOne(
+            { booking_ref: booking_ref.toUpperCase() },
+            {
+              $set: {
+                status: "CANCELLED",
+                cancellation_reason: reason ?? "Cancelled by guest request",
+                updated_at: new Date().toISOString(),
+              },
+            }
+          )
       );
 
       return JSON.stringify({
@@ -431,6 +488,14 @@ Available tools: {tool_names}`,
   function shouldContinue(state: typeof HotelsState.State) {
     const last = state.messages[state.messages.length - 1] as AIMessage;
     const next = last.tool_calls?.length ? "tools" : "__end__";
+    if (next === "tools") {
+      emitStep({
+        phase: "agent",
+        title: `Hotels agent calling: ${last.tool_calls!.map((tc) => tc.name).join(", ")}`,
+        detail: "gpt-4o selected tools to gather the data it needs",
+        agent: "hotels",
+      });
+    }
     console.log(
       `[Hotels Agent] → shouldContinue: ${next}${
         next === "tools" ? ` (${last.tool_calls!.map((tc) => tc.name).join(", ")})` : ""

@@ -4,6 +4,7 @@
  */
 
 import type { MongoClient } from "mongodb";
+import { traceStep } from "./tracer";
 
 // ─── MongoDB Vector Search (Atlas Auto-Embedding) ─────────────────────────────
 //
@@ -43,9 +44,30 @@ export async function vectorSearch(
     },
   ];
 
-  return coll
-    .aggregate<{ pageContent: string; score: number; metadata?: Record<string, unknown> }>(pipeline)
-    .toArray();
+  return traceStep(
+    {
+      phase: "vector_search",
+      title: `Vector search · ${collectionName}`,
+      detail: `Atlas auto-embedding ($vectorSearch) for "${queryText.slice(0, 80)}"`,
+      db: dbName,
+      collection: collectionName,
+      index: indexName,
+      meta: { queryText: queryText.slice(0, 120), limit, numCandidates },
+    },
+    () =>
+      coll
+        .aggregate<{ pageContent: string; score: number; metadata?: Record<string, unknown> }>(pipeline)
+        .toArray(),
+    (results) => ({
+      detail: `Embedded query server-side (voyage-4) → ${results.length} match${
+        results.length === 1 ? "" : "es"
+      }`,
+      meta: {
+        matches: results.length,
+        topScore: results[0]?.score ?? null,
+      },
+    })
+  );
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────

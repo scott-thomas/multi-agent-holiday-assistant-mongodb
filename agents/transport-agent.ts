@@ -40,6 +40,7 @@ import {
   recordInteractionSummary,
   updateUserProfile,
 } from "../memory/memory-api";
+import { traceStep, emitStep } from "../shared/tracer";
 import "dotenv/config";
 
 // ─── Graph State ─────────────────────────────────────────────────────────────
@@ -73,6 +74,12 @@ export async function callTransportAgent(
   const searchTransportOptionsTool = tool(
     async ({ origin, destination, travel_date, transport_type }) => {
       console.log("[Transport Agent] search_transport_options:", origin, "→", destination);
+      emitStep({
+        phase: "llm",
+        title: `Research transport · ${origin} → ${destination}`,
+        detail: "gpt-4o-mini synthesising realistic routes, times and costs",
+        agent: "transport",
+      });
 
       // Use a mini-LLM to synthesise realistic transport options
       const researchModel = new ChatOpenAI({ model: "gpt-4o-mini", temperature: 0.3 });
@@ -119,18 +126,30 @@ Format as a structured list. Be concise but informative.`
       console.log("[Transport Agent] get_routes_between:", origin, "→", destination);
 
       // Check if any transport bookings exist for this route
-      const existing = await bookingsCollection
-        .find(
-          {
-            booking_type: "transport",
-            "transport.origin": { $regex: origin, $options: "i" },
-            "transport.destination": { $regex: destination, $options: "i" },
-          },
-          { projection: { _id: 0 } }
-        )
-        .sort({ created_at: -1 })
-        .limit(5)
-        .toArray();
+      const existing = await traceStep(
+        {
+          phase: "mongodb",
+          title: "Check existing routes",
+          detail: `find on bookings · transport ${origin} → ${destination}`,
+          db: DB_NAMES.HOLIDAY,
+          collection: COLLECTIONS.BOOKINGS,
+          agent: "transport",
+        },
+        () =>
+          bookingsCollection
+            .find(
+              {
+                booking_type: "transport",
+                "transport.origin": { $regex: origin, $options: "i" },
+                "transport.destination": { $regex: destination, $options: "i" },
+              },
+              { projection: { _id: 0 } }
+            )
+            .sort({ created_at: -1 })
+            .limit(5)
+            .toArray(),
+        (r) => ({ detail: `Found ${r.length} previously booked option(s)` })
+      );
 
       if (existing.length) {
         return JSON.stringify({
@@ -164,6 +183,12 @@ Format as a structured list. Be concise but informative.`
   const getLocalTransfersTool = tool(
     async ({ location, from_point, to_point }) => {
       console.log("[Transport Agent] get_local_transfers:", location);
+      emitStep({
+        phase: "llm",
+        title: `Local transfers · ${location}`,
+        detail: `gpt-4o-mini advising on ${from_point} → ${to_point}`,
+        agent: "transport",
+      });
 
       const researchModel = new ChatOpenAI({ model: "gpt-4o-mini", temperature: 0.3 });
       const response = await researchModel.invoke(
@@ -243,7 +268,17 @@ Format as a structured list. Be concise but informative.`
         updated_at: now,
       };
 
-      await bookingsCollection.insertOne(booking);
+      await traceStep(
+        {
+          phase: "mongodb",
+          title: "Create transport booking",
+          detail: `insertOne into bookings · ref ${bookingRef} (${origin} → ${destination})`,
+          db: DB_NAMES.HOLIDAY,
+          collection: COLLECTIONS.BOOKINGS,
+          agent: "transport",
+        },
+        () => bookingsCollection.insertOne(booking)
+      );
 
       await updateUserProfile(store, userId, {
         last_transport_ref: bookingRef,
@@ -286,9 +321,21 @@ Format as a structured list. Be concise but informative.`
     async ({ booking_ref }) => {
       console.log("[Transport Agent] get_transport_booking:", booking_ref);
 
-      const doc = await bookingsCollection.findOne(
-        { booking_ref: booking_ref.toUpperCase(), booking_type: "transport" },
-        { projection: { _id: 0 } }
+      const doc = await traceStep(
+        {
+          phase: "mongodb",
+          title: "Retrieve transport booking",
+          detail: `findOne on bookings · ref ${booking_ref.toUpperCase()}`,
+          db: DB_NAMES.HOLIDAY,
+          collection: COLLECTIONS.BOOKINGS,
+          agent: "transport",
+        },
+        () =>
+          bookingsCollection.findOne(
+            { booking_ref: booking_ref.toUpperCase(), booking_type: "transport" },
+            { projection: { _id: 0 } }
+          ),
+        (d) => ({ detail: d ? `Found booking ${booking_ref.toUpperCase()}` : `No booking ${booking_ref.toUpperCase()}` })
       );
 
       if (!doc) {
@@ -322,15 +369,26 @@ Format as a structured list. Be concise but informative.`
         return `Transport booking ${booking_ref} is already cancelled.`;
       }
 
-      await bookingsCollection.updateOne(
-        { booking_ref: booking_ref.toUpperCase() },
+      await traceStep(
         {
-          $set: {
-            status: "CANCELLED",
-            cancellation_reason: reason ?? "Cancelled by passenger request",
-            updated_at: new Date().toISOString(),
-          },
-        }
+          phase: "mongodb",
+          title: "Cancel transport booking",
+          detail: `updateOne on bookings · ref ${booking_ref.toUpperCase()} → CANCELLED`,
+          db: DB_NAMES.HOLIDAY,
+          collection: COLLECTIONS.BOOKINGS,
+          agent: "transport",
+        },
+        () =>
+          bookingsCollection.updateOne(
+            { booking_ref: booking_ref.toUpperCase() },
+            {
+              $set: {
+                status: "CANCELLED",
+                cancellation_reason: reason ?? "Cancelled by passenger request",
+                updated_at: new Date().toISOString(),
+              },
+            }
+          )
       );
 
       return JSON.stringify({
@@ -410,6 +468,14 @@ Available tools: {tool_names}`,
   function shouldContinue(state: typeof TransportState.State) {
     const last = state.messages[state.messages.length - 1] as AIMessage;
     const next = last.tool_calls?.length ? "tools" : "__end__";
+    if (next === "tools") {
+      emitStep({
+        phase: "agent",
+        title: `Transport agent calling: ${last.tool_calls!.map((tc) => tc.name).join(", ")}`,
+        detail: "gpt-4o selected tools to research and book travel",
+        agent: "transport",
+      });
+    }
     console.log(
       `[Transport Agent] → shouldContinue: ${next}${
         next === "tools" ? ` (${last.tool_calls!.map((tc) => tc.name).join(", ")})` : ""
