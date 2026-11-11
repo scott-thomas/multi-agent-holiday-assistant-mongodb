@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Holiday AI · Agentic Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── Tokens ─────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #05080f;
+      --glass:       rgba(13, 18, 32, .5);
+      --glass-2:     rgba(18, 24, 42, .66);
+      --glass-hi:    rgba(255,255,255,.04);
+      --line:        rgba(255,255,255,.08);
+      --line-hi:     rgba(255,255,255,.16);
+      --text:        #eef2ff;
+      --text-2:      #a7b0c8;
+      --text-3:      #6b7490;
+      --accent:      #00ed64;          /* MongoDB green */
+      --accent-2:    #5cf2a6;
+      --hotels:      #22d3a0;
+      --transport:   #4f9dff;
+      --policy:      #c084fc;
+      --orch:        #fbbf24;
+      --llm:         #a78bfa;
+      --memory:      #fb7185;
+      --mongo:       #00ed64;
+      --vector:      #2dd4bf;
+      --danger:      #f87171;
+      --r-lg: 22px;
+      --r-md: 14px;
+      --r-sm: 9px;
+      --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+      --font-body:    'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono:    'JetBrains Mono', 'SF Mono', Menlo, monospace;
+      --theme: var(--accent);
+    }
+
+    html, body { height: 100%; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── 3D backdrop ────────────────────────────────────────────────── */
+    #scene {
+      position: fixed; inset: 0; z-index: 0;
+      width: 100%; height: 100%;
+      display: block;
+      pointer-events: none;
+    }
+    #vignette {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background:
+        radial-gradient(1200px 800px at 50% 55%, transparent 0%, rgba(5,8,15,.4) 70%, rgba(5,8,15,.85) 100%),
+        linear-gradient(180deg, rgba(5,8,15,.5) 0%, transparent 25%, transparent 75%, rgba(5,8,15,.7) 100%);
+    }
+    #aurora {
+      position: fixed; inset: -20%; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(40% 35% at 20% 20%, color-mix(in srgb, var(--theme) 22%, transparent), transparent 70%),
+        radial-gradient(35% 40% at 80% 75%, color-mix(in srgb, var(--transport) 14%, transparent), transparent 70%);
+      filter: blur(40px);
+      opacity: .7;
+      transition: background 1.2s ease;
+      animation: auroraDrift 26s ease-in-out infinite alternate;
+    }
+    @keyframes auroraDrift {
+      from { transform: translate3d(-2%, -1%, 0) rotate(0deg); }
+      to   { transform: translate3d(2%, 2%, 0) rotate(3deg); }
+    }
+
+    /* ─── App shell ──────────────────────────────────────────────────── */
+    #app {
+      position: relative; z-index: 2;
+      height: 100dvh;
+      display: grid;
+      grid-template-rows: 60px 1fr;
+      grid-template-columns: 236px minmax(0, 1fr) 400px;
+      grid-template-areas:
+        "top top top"
+        "rail main control";
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .glass {
+      background: var(--glass);
+      border: 1px solid var(--line);
+      border-radius: var(--r-lg);
+      backdrop-filter: blur(22px) saturate(140%);
+      -webkit-backdrop-filter: blur(22px) saturate(140%);
+      box-shadow: inset 0 1px 0 var(--glass-hi), 0 20px 60px rgba(0,0,0,.35);
+    }
+
+    /* ─── Top bar ────────────────────────────────────────────────────── */
+    #topbar {
+      grid-area: top;
+      display: flex; align-items: center; gap: 16px;
+      padding: 0 18px;
+    }
+    .brand { display: flex; align-items: center; gap: 11px; }
+    .brand-mark {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--theme), color-mix(in srgb, var(--theme) 40%, #0b1a3a));
+      display: grid; place-items: center;
+      box-shadow: 0 0 24px color-mix(in srgb, var(--theme) 45%, transparent);
+      transition: background .8s, box-shadow .8s;
+    }
+    .brand-mark svg { width: 18px; height: 18px; }
+    .brand-name { font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: .2px; }
+    .brand-sub  { font-size: 10px; color: var(--text-3); letter-spacing: 1.4px; text-transform: uppercase; margin-top: 1px; }
+
+    .top-divider { width: 1px; height: 26px; background: var(--line); }
+
+    #thread-title {
+      flex: 1; min-width: 0;
+      font-family: var(--font-display);
+      font-size: 14px; font-weight: 500; color: var(--text-2);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 12px; border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      font-size: 11px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase;
+      color: var(--text-2);
+      font-family: var(--font-display);
+    }
+    .status-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--text-3);
+      transition: background .3s;
+    }
+    .status-pill.busy .status-dot {
+      background: var(--theme);
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--theme) 60%, transparent);
+      animation: ping 1.4s ease-out infinite;
+    }
+    @keyframes ping {
+      0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--theme) 55%, transparent); }
+      100% { box-shadow: 0 0 0 9px transparent; }
+    }
+
+    .agent-chip {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 6px 12px; border-radius: 999px;
+      font-family: var(--font-display); font-size: 11px; font-weight: 600;
+      letter-spacing: .6px; text-transform: uppercase;
+      border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+      background: color-mix(in srgb, var(--c) 14%, transparent);
+      color: color-mix(in srgb, var(--c) 85%, white);
+    }
+    .agent-chip.hotels    { --c: var(--hotels); }
+    .agent-chip.transport { --c: var(--transport); }
+    .agent-chip.policy    { --c: var(--policy); }
+
+    .icon-btn {
+      width: 34px; height: 34px; border-radius: 10px;
+      border: 1px solid var(--line); background: rgba(255,255,255,.03);
+      color: var(--text-2); display: grid; place-items: center; cursor: pointer;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    .icon-btn:hover { background: rgba(255,255,255,.07); color: var(--text); border-color: var(--line-hi); }
+    #toggle-control { display: none; }
+
+    /* ─── Session rail ───────────────────────────────────────────────── */
+    #rail {
+      grid-area: rail;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .rail-head { padding: 16px 14px 10px; }
+
+    #new-chat-btn {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: var(--r-md);
+      border: 1px solid color-mix(in srgb, var(--theme) 40%, transparent);
+      background: linear-gradient(135deg, color-mix(in srgb, var(--theme) 22%, transparent), color-mix(in srgb, var(--theme) 6%, transparent));
+      color: var(--text);
+      font-family: var(--font-display); font-size: 13px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .2s, border-color .8s, background .8s;
+    }
+    #new-chat-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 30px color-mix(in srgb, var(--theme) 25%, transparent); }
+
+    .rail-label {
+      padding: 10px 16px 6px;
+      font-size: 10px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase;
+      color: var(--text-3); font-family: var(--font-display);
+    }
+
+    #thread-list { flex: 1; overflow-y: auto; padding: 0 8px 10px; }
+    #thread-list::-webkit-scrollbar { width: 4px; }
+    #thread-list::-webkit-scrollbar-thumb { background: var(--line-hi); border-radius: 2px; }
+
+    .thread-item {
+      padding: 10px 10px 10px 12px;
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      margin-bottom: 3px;
+      border: 1px solid transparent;
+      position: relative;
+      transition: background .15s, border-color .15s;
+    }
+    .thread-item:hover  { background: rgba(255,255,255,.04); }
+    .thread-item.active { background: rgba(255,255,255,.06); border-color: var(--line); }
+    .thread-item.active::before {
+      content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 2px;
+      border-radius: 2px; background: var(--theme);
+    }
+    .thread-title {
+      font-size: 12.5px; font-weight: 500; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .thread-meta {
+      display: flex; align-items: center; gap: 6px;
+      margin-top: 4px; font-size: 10.5px; color: var(--text-3);
+    }
+    .thread-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .rail-empty { padding: 20px 12px; font-size: 12px; color: var(--text-3); text-align: center; }
+
+    .rail-foot {
+      padding: 12px 14px;
+      border-top: 1px solid var(--line);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: conic-gradient(from 180deg, var(--hotels), var(--transport), var(--policy), var(--hotels));
+      display: grid; place-items: center;
+      font-family: var(--font-display); font-weight: 700; font-size: 12px; color: #05080f;
+    }
+    .user-lbl { font-size: 10px; color: var(--text-3); letter-spacing: .6px; text-transform: uppercase; }
+    .user-val { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-2); }
+
+    /* ─── Main column ────────────────────────────────────────────────── */
+    #main {
+      grid-area: main;
+      display: flex; flex-direction: column;
+      min-width: 0; min-height: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #feed {
+      flex: 1; min-height: 0;
+      overflow-y: auto;
+      padding: 28px 32px 160px;
+      scroll-behavior: smooth;
+    }
+    #feed::-webkit-scrollbar { width: 6px; }
+    #feed::-webkit-scrollbar-thumb { background: var(--line-hi); border-radius: 3px; }
+
+    /* Welcome hero */
+    #hero {
+      min-height: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 20px 0 40px;
+    }
+    .hero-kicker {
+      font-family: var(--font-display); font-size: 11px; letter-spacing: 2.4px;
+      text-transform: uppercase; color: var(--text-3);
+      display: inline-flex; align-items: center; gap: 10px;
+      margin-bottom: 18px;
+    }
+    .hero-kicker::before, .hero-kicker::after { content: ''; width: 28px; height: 1px; background: var(--line-hi); }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(34px, 4.6vw, 58px);
+      font-weight: 700; line-height: 1.02; letter-spacing: -1.2px;
+      background: linear-gradient(120deg, #ffffff 0%, #dbe4ff 40%, var(--theme) 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      margin-bottom: 14px;
+      transition: background 1s;
+    }
+    .hero-sub {
+      font-size: 14.5px; color: var(--text-2); max-width: 520px; line-height: 1.65;
+      margin-bottom: 34px;
+    }
+    .hero-sub b { color: var(--text); font-weight: 600; }
+
+    .prompts {
+      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px; width: 100%; max-width: 760px;
+    }
+    .prompt {
+      font: inherit; color: inherit;
+      text-align: left;
+      padding: 14px 14px 13px;
+      border-radius: var(--r-md);
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      cursor: pointer;
+      transition: transform .18s, border-color .18s, background .18s, box-shadow .2s;
+      position: relative; overflow: hidden;
+    }
+    .prompt::after {
+      content: ''; position: absolute; inset: 0; opacity: 0;
+      background: radial-gradient(240px 120px at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--c) 22%, transparent), transparent 70%);
+      transition: opacity .25s;
+    }
+    .prompt:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--c) 50%, transparent); box-shadow: 0 12px 30px rgba(0,0,0,.3); }
+    .prompt:hover::after { opacity: 1; }
+    .prompt-agent {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-display); font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--c); margin-bottom: 8px;
+    }
+    .prompt-agent i { width: 6px; height: 6px; border-radius: 50%; background: var(--c); box-shadow: 0 0 10px var(--c); }
+    .prompt-text { font-size: 13px; color: var(--text); line-height: 1.45; position: relative; }
+    .prompt.hotels    { --c: var(--hotels); }
+    .prompt.transport { --c: var(--transport); }
+    .prompt.policy    { --c: var(--policy); }
+
+    /* Conversation turns */
+    .turn { max-width: 820px; margin: 0 auto 26px; animation: rise .35s cubic-bezier(.2,.8,.2,1); }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+    .turn.user { display: flex; justify-content: flex-end; }
+    .brief {
+      max-width: 70%;
+      padding: 13px 18px;
+      border-radius: 18px 18px 6px 18px;
+      background: linear-gradient(135deg, color-mix(in srgb, var(--theme) 28%, rgba(255,255,255,.04)), rgba(255,255,255,.05));
+      border: 1px solid color-mix(in srgb, var(--theme) 35%, var(--line));
+      font-size: 14.5px; line-height: 1.55;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      transition: background .8s, border-color .8s;
+    }
+
+    .answer {
+      border-radius: var(--r-lg);
+      border: 1px solid var(--line);
+      background: var(--glass-2);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: inset 0 1px 0 var(--glass-hi), 0 18px 50px rgba(0,0,0,.35);
+      overflow: hidden;
+    }
+    .answer-head {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.02);
+    }
+    .answer-head .who {
+      font-family: var(--font-display); font-size: 12px; font-weight: 600; color: var(--text-2);
+      letter-spacing: .4px;
+    }
+    .answer-head .spacer { flex: 1; }
+    .answer-stats {
+      display: inline-flex; gap: 10px; align-items: center;
+      font-family: var(--font-mono); font-size: 10.5px; color: var(--text-3);
+    }
+    .answer-stats span b { color: var(--text-2); font-weight: 500; }
+    .trace-btn {
+      padding: 5px 10px; border-radius: 8px;
+      border: 1px solid var(--line); background: transparent;
+      color: var(--text-2); font-size: 11px; font-weight: 600; cursor: pointer;
+      font-family: var(--font-display);
+      transition: all .15s;
+    }
+    .trace-btn:hover { border-color: var(--theme); color: var(--text); }
+
+    .answer-body { padding: 16px 18px 18px; font-size: 14.5px; line-height: 1.7; color: var(--text); }
+    .answer-body h1, .answer-body h2, .answer-body h3 {
+      font-family: var(--font-display); font-size: 15px; font-weight: 600; margin: 14px 0 6px; color: #fff;
+    }
+    .answer-body p { margin: 7px 0; }
+    .answer-body p:first-child { margin-top: 0; }
+    .answer-body p:last-child  { margin-bottom: 0; }
+    .answer-body ul, .answer-body ol { padding-left: 20px; margin: 8px 0; }
+    .answer-body li { margin: 4px 0; }
+    .answer-body strong { color: #fff; font-weight: 600; }
+    .answer-body code {
+      font-family: var(--font-mono); font-size: 12.5px;
+      background: rgba(255,255,255,.07); padding: 1px 6px; border-radius: 5px; color: var(--accent-2);
+    }
+    .answer-body pre {
+      background: rgba(0,0,0,.35); border: 1px solid var(--line); border-radius: 10px;
+      padding: 12px; overflow-x: auto; margin: 10px 0; font-size: 12.5px;
+    }
+    .answer-body pre code { background: none; padding: 0; color: var(--text); }
+    .answer-body a { color: var(--accent-2); text-decoration: underline; text-underline-offset: 2px; }
+    .answer-body hr { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
+    .answer-body table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 13px; }
+    .answer-body th, .answer-body td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; }
+    .answer-body th { background: rgba(255,255,255,.04); font-weight: 600; }
+
+    /* Thinking state inside an answer card */
+    .thinking { display: flex; align-items: center; gap: 14px; padding: 18px 18px 20px; }
+    .orbit { position: relative; width: 38px; height: 38px; flex-shrink: 0; }
+    .orbit i {
+      position: absolute; inset: 0; border-radius: 50%;
+      border: 1.5px solid transparent;
+      border-top-color: var(--theme);
+      animation: spin 1.1s linear infinite;
+    }
+    .orbit i:nth-child(2) { inset: 6px; border-top-color: var(--transport); animation-duration: 1.7s; animation-direction: reverse; }
+    .orbit i:nth-child(3) { inset: 12px; border-top-color: var(--policy); animation-duration: 2.3s; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .thinking-text { min-width: 0; }
+    .thinking-title { font-family: var(--font-display); font-size: 13.5px; font-weight: 600; }
+    .thinking-sub {
+      font-size: 12px; color: var(--text-2); margin-top: 2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 540px;
+    }
+    .thinking-sub .mono { font-family: var(--font-mono); color: var(--accent-2); font-size: 11px; }
+
+    /* Inline (mobile) trace fallback */
+    .inline-trace { display: none; }
+
+    /* ─── Command bar ────────────────────────────────────────────────── */
+    #composer {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      padding: 0 32px 22px;
+      background: linear-gradient(180deg, transparent, rgba(5,8,15,.55) 45%);
+      pointer-events: none;
+    }
+    .composer-inner {
+      pointer-events: auto;
+      max-width: 820px; margin: 0 auto;
+      position: relative;
+      border-radius: 20px;
+      padding: 1px;
+      background: linear-gradient(135deg, var(--line-hi), var(--line));
+      transition: box-shadow .3s;
+    }
+    .composer-inner.busy::before,
+    .composer-inner:focus-within::before {
+      content: ''; position: absolute; inset: -1px; border-radius: 21px; z-index: -1;
+      background: conic-gradient(from var(--ang, 0deg), transparent 0 55%, var(--theme) 75%, var(--transport) 85%, transparent 100%);
+      filter: blur(10px); opacity: .55;
+      animation: sweep 3.5s linear infinite;
+    }
+    @property --ang { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+    @keyframes sweep { to { --ang: 360deg; } }
+    .composer-box {
+      border-radius: 19px;
+      background: rgba(10, 14, 26, .9);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      display: flex; align-items: flex-end; gap: 10px;
+      padding: 10px 10px 10px 18px;
+    }
+    #message-input {
+      flex: 1; resize: none; border: 0; outline: 0; background: transparent;
+      color: var(--text); font-family: var(--font-body); font-size: 14.5px; line-height: 1.5;
+      min-height: 40px; max-height: 160px; padding: 9px 0;
+    }
+    #message-input::placeholder { color: var(--text-3); }
+    .composer-hint {
+      font-size: 10.5px; color: var(--text-3); font-family: var(--font-mono);
+      padding-bottom: 12px; white-space: nowrap;
+    }
+    #send-btn {
+      width: 42px; height: 42px; border-radius: 13px; border: 0; cursor: pointer;
+      background: var(--theme); color: #04110a;
+      display: grid; place-items: center;
+      box-shadow: 0 6px 20px color-mix(in srgb, var(--theme) 40%, transparent);
+      transition: transform .12s, filter .15s, background .8s;
+    }
+    #send-btn:hover { filter: brightness(1.08); }
+    #send-btn:active { transform: scale(.94); }
+    #send-btn:disabled { background: rgba(255,255,255,.12); color: var(--text-3); box-shadow: none; cursor: not-allowed; }
+
+    /* ─── Mission control ────────────────────────────────────────────── */
+    #control {
+      grid-area: control;
+      display: flex; flex-direction: column;
+      min-height: 0; overflow: hidden;
+    }
+    .panel-head {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 16px 10px;
+    }
+    .panel-title {
+      font-family: var(--font-display); font-size: 11px; font-weight: 600;
+      letter-spacing: 1.6px; text-transform: uppercase; color: var(--text-2);
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .panel-title i { width: 6px; height: 6px; border-radius: 50%; background: var(--text-3); }
+    #control.live .panel-title i { background: var(--theme); box-shadow: 0 0 12px var(--theme); }
+    .panel-sub { font-size: 10.5px; color: var(--text-3); margin-left: auto; font-family: var(--font-mono); }
+
+    /* Network graph */
+    #network-wrap { padding: 0 10px; }
+    #network {
+      width: 100%; height: auto; display: block;
+      border-radius: var(--r-md);
+      background:
+        radial-gradient(60% 80% at 50% 50%, rgba(255,255,255,.025), transparent),
+        repeating-linear-gradient(0deg, transparent 0 23px, rgba(255,255,255,.025) 23px 24px),
+        repeating-linear-gradient(90deg, transparent 0 23px, rgba(255,255,255,.025) 23px 24px);
+      border: 1px solid var(--line);
+    }
+    .edge {
+      fill: none; stroke: rgba(255,255,255,.1); stroke-width: 1.2;
+      transition: stroke .4s, stroke-width .4s;
+    }
+    .edge.flow {
+      stroke: var(--c, var(--theme)); stroke-width: 1.8;
+      stroke-dasharray: 5 7;
+      animation: dash 1s linear infinite;
+      filter: drop-shadow(0 0 4px var(--c, var(--theme)));
+    }
+    .edge.hot { stroke: color-mix(in srgb, var(--c, var(--theme)) 60%, rgba(255,255,255,.1)); }
+    @keyframes dash { to { stroke-dashoffset: -24; } }
+
+    .node { cursor: default; }
+    .node .ring {
+      fill: rgba(10,14,26,.9);
+      stroke: rgba(255,255,255,.2); stroke-width: 1.2;
+      transition: stroke .3s, fill .3s;
+    }
+    .node .halo {
+      fill: var(--c); opacity: 0;
+      transition: opacity .3s;
+    }
+    .node .glyph { color: var(--text-2); transition: color .3s; }
+    .node .lbl {
+      font-family: var(--font-display); font-size: 8.5px; font-weight: 600; letter-spacing: .4px;
+      fill: var(--text-3); text-anchor: middle; text-transform: uppercase;
+    }
+    .node .sub {
+      font-family: var(--font-mono); font-size: 7.5px;
+      fill: var(--text-3); text-anchor: middle; opacity: .8;
+    }
+    .node .count {
+      font-family: var(--font-mono); font-size: 8px; font-weight: 600;
+      fill: #04110a; text-anchor: middle;
+    }
+    .node .count-bg { fill: var(--c); opacity: 0; transition: opacity .3s; }
+    .node.active .ring  { stroke: var(--c); stroke-width: 1.8; fill: color-mix(in srgb, var(--c) 25%, rgba(10,14,26,.9)); }
+    .node.active .halo  { opacity: .22; animation: halo 1.2s ease-out infinite; }
+    .node.active .glyph { color: #fff; }
+    .node.active .lbl   { fill: var(--text); }
+    .node.touched .ring { stroke: color-mix(in srgb, var(--c) 60%, rgba(255,255,255,.2)); }
+    .node.touched .count-bg, .node.touched .count { opacity: 1; }
+    .node .count { opacity: 0; transition: opacity .3s; }
+    @keyframes halo { 0% { transform: scale(1); opacity: .3; } 100% { transform: scale(1.9); opacity: 0; } }
+    .node .halo { transform-box: fill-box; transform-origin: center; }
+    .node.c-orch   { --c: var(--orch); }
+    .node.c-llm    { --c: var(--llm); }
+    .node.c-hotels { --c: var(--hotels); }
+    .node.c-transport { --c: var(--transport); }
+    .node.c-policy { --c: var(--policy); }
+    .node.c-mongo  { --c: var(--mongo); }
+    .node.c-memory { --c: var(--memory); }
+    .node.c-user   { --c: #e2e8f0; }
+
+    /* Metrics */
+    .metrics {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 6px; padding: 10px 10px 4px;
+    }
+    .metric {
+      padding: 8px 8px 7px; border-radius: 10px;
+      border: 1px solid var(--line); background: rgba(255,255,255,.025);
+      text-align: center;
+    }
+    .metric b {
+      display: block; font-family: var(--font-display); font-size: 17px; font-weight: 700; line-height: 1;
+      color: var(--text); font-variant-numeric: tabular-nums;
+    }
+    .metric span {
+      display: block; margin-top: 4px; font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--text-3); font-family: var(--font-display);
+    }
+    .metric.v b { color: var(--vector); }
+    .metric.m b { color: var(--mongo); }
+    .metric.y b { color: var(--memory); }
+
+    /* Timeline */
+    .timeline-head {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 16px 6px;
+    }
+    .timeline-head .panel-title i { display: none; }
+    .tl-filter { margin-left: auto; display: flex; gap: 4px; }
+    .tl-filter button {
+      width: 18px; height: 18px; border-radius: 5px; border: 1px solid var(--line);
+      background: transparent; cursor: pointer; position: relative;
+      transition: background .15s, border-color .15s;
+    }
+    .tl-filter button::after {
+      content: ''; position: absolute; inset: 4px; border-radius: 3px; background: var(--c); opacity: .8;
+    }
+    .tl-filter button.off::after { opacity: .18; }
+    .tl-filter button.off { border-color: transparent; }
+
+    #timeline {
+      flex: 1; min-height: 0; overflow-y: auto;
+      padding: 0 10px 14px;
+    }
+    #timeline::-webkit-scrollbar { width: 5px; }
+    #timeline::-webkit-scrollbar-thumb { background: var(--line-hi); border-radius: 3px; }
+    .tl-empty {
+      padding: 26px 16px; text-align: center; font-size: 12px; color: var(--text-3); line-height: 1.6;
+    }
+    .tl-empty b { color: var(--text-2); font-weight: 500; }
+
+    .step {
+      --c: var(--text-3);
+      display: grid; grid-template-columns: 18px 1fr; gap: 10px;
+      padding: 8px 8px 8px 6px;
+      border-radius: 10px;
+      position: relative;
+      animation: rise .3s cubic-bezier(.2,.8,.2,1);
+      transition: background .25s;
+    }
+    .step.hidden { display: none; }
+    .step.running { background: color-mix(in srgb, var(--c) 9%, transparent); }
+    .step.error   { --c: var(--danger); }
+    .step.p-orchestrator  { --c: var(--orch); }
+    .step.p-llm           { --c: var(--llm); }
+    .step.p-agent, .step.p-tool { --c: var(--transport); }
+    .step.p-agent.a-hotels, .step.p-tool.a-hotels { --c: var(--hotels); }
+    .step.p-agent.a-policy, .step.p-tool.a-policy { --c: var(--policy); }
+    .step.p-vector_search { --c: var(--vector); }
+    .step.p-mongodb       { --c: var(--mongo); }
+    .step.p-memory        { --c: var(--memory); }
+
+    .step-rail { display: flex; flex-direction: column; align-items: center; padding-top: 3px; }
+    .step-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+      background: var(--c); box-shadow: 0 0 10px color-mix(in srgb, var(--c) 60%, transparent);
+      position: relative;
+    }
+    .step.running .step-dot { background: transparent; border: 1.5px solid var(--c); box-shadow: none; }
+    .step.running .step-dot::after {
+      content: ''; position: absolute; inset: 2px; border-radius: 50%; background: var(--c);
+      animation: dotPulse 1s ease-in-out infinite;
+    }
+    @keyframes dotPulse { 0%,100% { opacity: .25; transform: scale(.6); } 50% { opacity: 1; transform: scale(1); } }
+    .step-line { width: 1px; flex: 1; min-height: 10px; margin-top: 4px; background: var(--line); }
+    .step:last-child .step-line { display: none; }
+
+    .step-main { min-width: 0; }
+    .step-top { display: flex; align-items: baseline; gap: 8px; }
+    .step-title { flex: 1; min-width: 0; font-size: 12.5px; font-weight: 500; color: var(--text); line-height: 1.35; }
+    .step-phase {
+      font-family: var(--font-display); font-size: 9px; font-weight: 600; letter-spacing: .8px;
+      text-transform: uppercase; color: var(--c); white-space: nowrap;
+    }
+    .step-dur { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); white-space: nowrap; }
+    .step-detail { font-size: 11.5px; color: var(--text-2); margin-top: 2px; line-height: 1.45; }
+    .step-ns {
+      display: inline-flex; align-items: center; gap: 6px; margin-top: 6px;
+      font-family: var(--font-mono); font-size: 10px; color: var(--text-2);
+      padding: 3px 8px; border-radius: 6px;
+      border: 1px solid var(--line); background: rgba(0,0,0,.25);
+    }
+    .step-ns .ns-idx { color: var(--mongo); }
+    .step-ns .ns-leaf { color: var(--text); }
+    .step-ns svg { width: 10px; height: 10px; }
+    .step-bar {
+      height: 2px; margin-top: 6px; border-radius: 2px;
+      background: linear-gradient(90deg, var(--c), transparent);
+      width: var(--w, 0%); opacity: .7;
+      transition: width .4s ease;
+    }
+
+    .control-foot {
+      padding: 10px 16px; border-top: 1px solid var(--line);
+      font-size: 10.5px; color: var(--text-3); display: flex; align-items: center; gap: 8px;
+    }
+    .control-foot .leaf { color: var(--mongo); display: inline-flex; }
+
+    /* ─── Toast ──────────────────────────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 26px; left: 50%; transform: translate(-50%, 20px);
+      padding: 10px 16px; border-radius: 12px; z-index: 50;
+      background: rgba(20,24,40,.95); border: 1px solid var(--line-hi); color: var(--text);
+      font-size: 13px; opacity: 0; pointer-events: none;
+      transition: opacity .25s, transform .25s;
+    }
+    #toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    /* ─── Responsive ─────────────────────────────────────────────────── */
+    @media (max-width: 1280px) {
+      #app { grid-template-columns: 210px minmax(0, 1fr) 360px; }
+    }
+    @media (max-width: 1080px) {
+      #app { grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "main"; }
+      #rail { display: none; }
+      #control {
+        position: fixed; top: 76px; right: 12px; bottom: 12px; width: min(400px, calc(100vw - 24px));
+        z-index: 20; transform: translateX(calc(100% + 24px)); transition: transform .3s cubic-bezier(.2,.8,.2,1);
+      }
+      #control.open { transform: none; }
+      #toggle-control { display: grid; }
+      .prompts { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      #feed { padding: 20px 16px 150px; }
+      #composer { padding: 0 14px 14px; }
+      .brief { max-width: 90%; }
+      .prompts { grid-template-columns: 1fr; }
+      .composer-hint { display: none; }
+      .answer-stats { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; transition-duration: .001s !important; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+<div id="aurora"></div>
+<div id="vignette"></div>
+
+<div id="app">
+
+  <!-- ─── Top bar ─────────────────────────────────────────────────────── -->
+  <header id="topbar" class="glass">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#04110a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2.5c3 3.6 4.5 7 4.5 10.2 0 3.3-1.6 6-4.5 8.8-2.9-2.8-4.5-5.5-4.5-8.8C7.5 9.5 9 6.1 12 2.5z"/>
+          <path d="M12 9v12.5"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Holiday AI</div>
+        <div class="brand-sub">Agentic planner · MongoDB</div>
+      </div>
+    </div>
+    <div class="top-divider"></div>
+    <div id="thread-title">New journey</div>
+    <div id="header-agent"></div>
+    <div id="status" class="status-pill"><span class="status-dot"></span><span id="status-text">Idle</span></div>
+    <button id="toggle-control" class="icon-btn" title="Mission control">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>
+    </button>
+  </header>
+
+  <!-- ─── Session rail ────────────────────────────────────────────────── -->
+  <aside id="rail" class="glass">
+    <div class="rail-head">
+      <button id="new-chat-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        New journey
+      </button>
+    </div>
+    <div class="rail-label">Recent journeys</div>
+    <div id="thread-list"></div>
+    <div class="rail-foot">
+      <div class="avatar" id="user-avatar">?</div>
+      <div style="min-width:0">
+        <div class="user-lbl">Memory namespace</div>
+        <div class="user-val" id="user-id-display">—</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ─── Conversation ────────────────────────────────────────────────── -->
+  <section id="main" class="glass">
+    <div id="feed">
+      <div id="hero">
+        <div class="hero-kicker">Three specialists · one orchestrator · live memory</div>
+        <h1 class="hero-title">Where to next?</h1>
+        <p class="hero-sub">
+          Ask anything about <b>hotels</b>, <b>getting there</b> or <b>the rules</b>.
+          Watch the orchestrator route your request, specialists run vector searches on Atlas,
+          and long-term memory recall who you are — all live, on the right.
+        </p>
+        <div class="prompts">
+          <button class="prompt hotels" data-query="Find me a 4-star beachfront hotel in Santorini for 2 adults">
+            <div class="prompt-agent"><i></i>Hotels</div>
+            <div class="prompt-text">4-star beachfront hotel in Santorini for two</div>
+          </button>
+          <button class="prompt transport" data-query="How do I get from London to Barcelona? Show me all transport options">
+            <div class="prompt-agent"><i></i>Transport</div>
+            <div class="prompt-text">London → Barcelona, every way to get there</div>
+          </button>
+          <button class="prompt policy" data-query="What is the cancellation policy if I need to cancel my hotel booking?">
+            <div class="prompt-agent"><i></i>Policy</div>
+            <div class="prompt-text">What happens if I cancel my hotel booking?</div>
+          </button>
+          <button class="prompt hotels" data-query="Compare boutique hotels in Paris under £200 per night">
+            <div class="prompt-agent"><i></i>Hotels</div>
+            <div class="prompt-text">Boutique Paris stays under £200 a night</div>
+          </button>
+          <button class="prompt policy" data-query="Can I bring my dog to a resort in Mallorca?">
+            <div class="prompt-agent"><i></i>Policy</div>
+            <div class="prompt-text">Can my dog come to a Mallorca resort?</div>
+          </button>
+          <button class="prompt transport" data-query="What is the cheapest way to travel from Paris to Amsterdam?">
+            <div class="prompt-agent"><i></i>Transport</div>
+            <div class="prompt-text">Cheapest route Paris → Amsterdam</div>
+          </button>
+        </div>
+      </div>
+      <div id="messages"></div>
+    </div>
+
+    <div id="composer">
+      <div class="composer-inner" id="composer-inner">
+        <div class="composer-box">
+          <textarea id="message-input" rows="1" placeholder="Plan a trip, book a stay, check a rule…"></textarea>
+          <div class="composer-hint">⏎ send · ⇧⏎ newline</div>
+          <button id="send-btn" title="Send">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Mission control ─────────────────────────────────────────────── -->
+  <aside id="control" class="glass">
+    <div class="panel-head">
+      <div class="panel-title"><i></i>Mission control</div>
+      <div class="panel-sub" id="control-sub">waiting for a request</div>
+    </div>
+    <div id="network-wrap">
+      <svg id="network" viewBox="0 0 380 250" aria-label="Agent network"></svg>
+    </div>
+    <div class="metrics">
+      <div class="metric"><b id="m-steps">0</b><span>steps</span></div>
+      <div class="metric v"><b id="m-vector">0</b><span>vector</span></div>
+      <div class="metric m"><b id="m-mongo">0</b><span>mongodb</span></div>
+      <div class="metric y"><b id="m-time">0.0s</b><span>elapsed</span></div>
+    </div>
+    <div class="timeline-head">
+      <div class="panel-title">Execution timeline</div>
+      <div class="tl-filter" id="tl-filter" title="Toggle phases"></div>
+    </div>
+    <div id="timeline">
+      <div class="tl-empty">Send a request and every routing decision, <b>vector search</b>, <b>MongoDB</b> operation and <b>memory</b> read/write will stream here in real time.</div>
+    </div>
+    <div class="control-foot">
+      <span class="leaf"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5c3 3.6 4.5 7 4.5 10.2 0 3.3-1.6 6-4.5 8.8-2.9-2.8-4.5-5.5-4.5-8.8C7.5 9.5 9 6.1 12 2.5z"/></svg></span>
+      Atlas Vector Search · voyage-4 auto-embedding · LangGraph checkpoints &amp; store
+    </div>
+  </aside>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  3D backdrop (Three.js) — purely decorative, degrades to CSS aurora.
+  // ═══════════════════════════════════════════════════════════════════════════
+  const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const AGENT_HEX = { hotels: 0x22d3a0, transport: 0x4f9dff, policy: 0xc084fc, default: 0x00ed64 };
+
+  const scene3d = {
+    setAgent() {}, setBusy() {}, pulse() {},
+  };
+
+  async function initScene() {
+    if (REDUCED) return;
+    let THREE;
+    try {
+      THREE = await import('https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js');
+    } catch (err) {
+      console.warn('Three.js unavailable, falling back to CSS backdrop.', err);
+      return;
+    }
+
+    const canvas = document.getElementById('scene');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+    camera.position.set(0, 0, 7.2);
+
+    const world = new THREE.Group();
+    world.position.set(0.55, -0.45, 0);
+    world.rotation.x = 0.38;
+    scene.add(world);
+
+    const uniforms = {
+      uTime:   { value: 0 },
+      uEnergy: { value: 0.15 },
+      uColor:  { value: new THREE.Color(AGENT_HEX.default) },
+      uPR:     { value: renderer.getPixelRatio() },
+    };
+
+    // ── Globe of points (Fibonacci sphere) ──────────────────────────────────
+    const R = 2.05;
+    const N = 2600;
+    const pos = new Float32Array(N * 3);
+    const seed = new Float32Array(N);
+    const golden = Math.PI * (3 - Math.sqrt(5));
+    for (let i = 0; i < N; i++) {
+      const y = 1 - (i / (N - 1)) * 2;
+      const r = Math.sqrt(1 - y * y);
+      const th = golden * i;
+      pos[i * 3] = Math.cos(th) * r * R;
+      pos[i * 3 + 1] = y * R;
+      pos[i * 3 + 2] = Math.sin(th) * r * R;
+      seed[i] = Math.random();
+    }
+    const globeGeo = new THREE.BufferGeometry();
+    globeGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    globeGeo.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
+
+    const pointMat = new THREE.ShaderMaterial({
+      uniforms,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      vertexShader: `
+        uniform float uTime; uniform float uEnergy; uniform float uPR;
+        attribute float aSeed;
+        varying float vA;
+        void main() {
+          float pulse = sin(uTime * 1.6 + aSeed * 6.2831) * 0.5 + 0.5;
+          vec3 p = position * (1.0 + pulse * 0.02 * uEnergy);
+          vec4 mv = modelViewMatrix * vec4(p, 1.0);
+          gl_PointSize = (2.0 + pulse * (1.1 + 1.8 * uEnergy)) * uPR * (7.0 / -mv.z);
+          vA = 0.35 + 0.65 * pulse;
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: `
+        uniform vec3 uColor; varying float vA;
+        void main() {
+          float d = length(gl_PointCoord - 0.5);
+          float a = smoothstep(0.5, 0.05, d);
+          gl_FragColor = vec4(uColor, a * vA * 1.0);
+        }`,
+    });
+    const globe = new THREE.Points(globeGeo, pointMat);
+    world.add(globe);
+
+    // Faint latitude rings for structure.
+    const ringMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.05 });
+    for (const lat of [-0.6, -0.3, 0, 0.3, 0.6]) {
+      const rr = Math.sqrt(1 - lat * lat) * R;
+      const pts = [];
+      for (let i = 0; i <= 128; i++) {
+        const a = (i / 128) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a) * rr, lat * R, Math.sin(a) * rr));
+      }
+      world.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), ringMat));
+    }
+
+    // ── Travel arcs ─────────────────────────────────────────────────────────
+    const arcMat = new THREE.LineDashedMaterial({
+      color: 0xffffff, transparent: true, opacity: 0.55,
+      dashSize: 0.22, gapSize: 0.5,
+    });
+    const arcs = [];
+    function randomSurface() {
+      const i = Math.floor(Math.random() * N);
+      return new THREE.Vector3(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]);
+    }
+    for (let k = 0; k < 14; k++) {
+      const a = randomSurface(), b = randomSurface();
+      if (a.distanceTo(b) < 1.2) { k--; continue; }
+      const mid = a.clone().add(b).multiplyScalar(0.5).normalize().multiplyScalar(R + a.distanceTo(b) * 0.42);
+      const curve = new THREE.QuadraticBezierCurve3(a, mid, b);
+      const geo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(64));
+      const line = new THREE.Line(geo, arcMat.clone());
+      line.computeLineDistances();
+      line.material.color.set(uniforms.uColor.value);
+      world.add(line);
+      // Core LineDashedMaterial has no dashOffset; shift lineDistance instead.
+      arcs.push({ line, base: Float32Array.from(geo.attributes.lineDistance.array), off: Math.random() * 5 });
+    }
+
+    // ── Dust field ──────────────────────────────────────────────────────────
+    const DN = 900;
+    const dpos = new Float32Array(DN * 3);
+    const dseed = new Float32Array(DN);
+    for (let i = 0; i < DN; i++) {
+      dpos[i * 3] = (Math.random() - 0.5) * 18;
+      dpos[i * 3 + 1] = (Math.random() - 0.5) * 11;
+      dpos[i * 3 + 2] = (Math.random() - 0.5) * 6 - 2;
+      dseed[i] = Math.random();
+    }
+    const dustGeo = new THREE.BufferGeometry();
+    dustGeo.setAttribute('position', new THREE.BufferAttribute(dpos, 3));
+    dustGeo.setAttribute('aSeed', new THREE.BufferAttribute(dseed, 1));
+    const dustMat = pointMat.clone();
+    dustMat.uniforms = uniforms;
+    dustMat.fragmentShader = pointMat.fragmentShader.replace('* 1.0)', '* 0.3)');
+    const dust = new THREE.Points(dustGeo, dustMat);
+    scene.add(dust);
+
+    // ── Shockwave rings (vector search pulses) ──────────────────────────────
+    const waves = [];
+    const waveGeo = new THREE.RingGeometry(0.985, 1, 128);
+    scene3d.pulse = (hex) => {
+      const mat = new THREE.MeshBasicMaterial({ color: hex ?? uniforms.uColor.value, transparent: true, opacity: 0.6, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
+      const m = new THREE.Mesh(waveGeo, mat);
+      m.position.copy(world.position);
+      m.scale.setScalar(R * 0.98);
+      m.lookAt(camera.position);
+      m.userData.t = 0;
+      scene.add(m);
+      waves.push(m);
+    };
+
+    // ── State setters ───────────────────────────────────────────────────────
+    const targetColor = new THREE.Color(AGENT_HEX.default);
+    let targetEnergy = 0.15;
+    scene3d.setAgent = (agent) => targetColor.set(AGENT_HEX[agent] ?? AGENT_HEX.default);
+    scene3d.setBusy = (busy) => { targetEnergy = busy ? 1 : 0.15; };
+
+    // ── Interaction / loop ──────────────────────────────────────────────────
+    const mouse = { x: 0, y: 0 };
+    window.addEventListener('pointermove', (e) => {
+      mouse.x = (e.clientX / window.innerWidth - 0.5) * 2;
+      mouse.y = (e.clientY / window.innerHeight - 0.5) * 2;
+    }, { passive: true });
+
+    function resize() {
+      const w = window.innerWidth, h = window.innerHeight;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      uniforms.uPR.value = renderer.getPixelRatio();
+      renderer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    window.addEventListener('resize', resize);
+    new ResizeObserver(resize).observe(document.body);
+    resize();
+
+    const clock = new THREE.Clock();
+    let visible = true;
+    document.addEventListener('visibilitychange', () => { visible = !document.hidden; if (visible) { clock.getDelta(); loop(); } });
+
+    function loop() {
+      if (!visible) return;
+      requestAnimationFrame(loop);
+      const dt = Math.min(clock.getDelta(), 0.05);
+      uniforms.uTime.value += dt;
+      uniforms.uEnergy.value += (targetEnergy - uniforms.uEnergy.value) * 0.05;
+      uniforms.uColor.value.lerp(targetColor, 0.04);
+      for (const a of arcs) {
+        a.line.material.color.copy(uniforms.uColor.value);
+        a.off += dt * (0.3 + uniforms.uEnergy.value * 1.1);
+        const attr = a.line.geometry.attributes.lineDistance;
+        for (let i = 0; i < attr.count; i++) attr.array[i] = a.base[i] - a.off;
+        attr.needsUpdate = true;
+      }
+      world.rotation.y += dt * (0.045 + uniforms.uEnergy.value * 0.22);
+      dust.rotation.y += dt * 0.008;
+      camera.position.x += ((mouse.x * 0.35) - camera.position.x) * 0.03;
+      camera.position.y += ((-mouse.y * 0.25) - camera.position.y) * 0.03;
+      camera.lookAt(0.3, -0.3, 0);
+      for (let i = waves.length - 1; i >= 0; i--) {
+        const w = waves[i];
+        w.userData.t += dt / 1.3;
+        const t = w.userData.t;
+        w.scale.setScalar(R * (0.98 + t * 0.9));
+        w.material.opacity = 0.6 * (1 - t);
+        w.lookAt(camera.position);
+        if (t >= 1) { scene.remove(w); w.material.dispose(); waves.splice(i, 1); }
+      }
+      renderer.render(scene, camera);
+    }
+    loop();
+  }
+  initScene();
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  Agent network graph (SVG)
+  // ═══════════════════════════════════════════════════════════════════════════
+  const NODES = [
+    { id: 'user',          x: 32,  y: 125, c: 'user',      lbl: 'You',          glyph: 'user' },
+    { id: 'orchestrator',  x: 118, y: 125, c: 'orch',      lbl: 'Orchestrator', glyph: 'orch' },
+    { id: 'llm',           x: 118, y: 36,  c: 'llm',       lbl: 'LLM',          sub: 'gpt-4o-mini', glyph: 'llm' },
+    { id: 'hotels',        x: 220, y: 62,  c: 'hotels',    lbl: 'Hotels',       glyph: 'agent' },
+    { id: 'transport',     x: 220, y: 125, c: 'transport', lbl: 'Transport',    glyph: 'agent' },
+    { id: 'policy',        x: 220, y: 188, c: 'policy',    lbl: 'Policy',       glyph: 'agent' },
+    { id: 'col:hotels',           x: 330, y: 34,  c: 'mongo',  lbl: 'hotels',           sub: 'holiday_db', glyph: 'db' },
+    { id: 'col:bookings',         x: 330, y: 92,  c: 'mongo',  lbl: 'bookings',         sub: 'holiday_db', glyph: 'db' },
+    { id: 'col:travel_policies',  x: 330, y: 150, c: 'mongo',  lbl: 'policies',         sub: 'holiday_db', glyph: 'db' },
+    { id: 'col:long_term_memory', x: 330, y: 212, c: 'memory', lbl: 'memory',           sub: 'agent_memory', glyph: 'mem' },
+  ];
+  const EDGES = [
+    ['user', 'orchestrator'], ['orchestrator', 'llm'],
+    ['orchestrator', 'hotels'], ['orchestrator', 'transport'], ['orchestrator', 'policy'],
+    ['hotels', 'llm'], ['transport', 'llm'], ['policy', 'llm'],
+    ['hotels', 'col:hotels'], ['hotels', 'col:bookings'],
+    ['transport', 'col:bookings'],
+    ['policy', 'col:travel_policies'], ['policy', 'col:bookings'],
+    ['orchestrator', 'col:long_term_memory'],
+    ['hotels', 'col:long_term_memory'], ['transport', 'col:long_term_memory'], ['policy', 'col:long_term_memory'],
+  ];
+  const GLYPHS = {
+    user:  '<circle cx="0" cy="-2.5" r="3"/><path d="M-5.5 6c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/>',
+    orch:  '<path d="M0-6v3M0 3v3M-6 0h3M3 0h3"/><circle cx="0" cy="0" r="2.2"/>',
+    llm:   '<path d="M-4-3h8l-2 7h-4z"/><path d="M-1-6h2M-4-3l-2-2M4-3l2-2"/>',
+    agent: '<rect x="-5" y="-5" width="10" height="10" rx="2.5"/><circle cx="-2" cy="-1" r="1" fill="currentColor"/><circle cx="2" cy="-1" r="1" fill="currentColor"/><path d="M-2 2.5h4"/>',
+    db:    '<ellipse cx="0" cy="-4" rx="5.5" ry="2"/><path d="M-5.5-4v8c0 1.1 2.5 2 5.5 2s5.5-.9 5.5-2v-8"/><path d="M-5.5 0c0 1.1 2.5 2 5.5 2s5.5-.9 5.5-2"/>',
+    mem:   '<path d="M0 5.5c-4-2.6-6-5-6-7.5a3.3 3.3 0 0 1 6-1.8 3.3 3.3 0 0 1 6 1.8c0 2.5-2 4.9-6 7.5z"/>',
+  };
+
+  const nodeEls = new Map();
+  const edgeEls = new Map();
+  const nodeHits = new Map();
+
+  function edgeKey(a, b) { return [a, b].sort().join('|'); }
+
+  function buildNetwork() {
+    const svg = document.getElementById('network');
+    const ns = 'http://www.w3.org/2000/svg';
+    const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
+    const gEdges = document.createElementNS(ns, 'g');
+    const gNodes = document.createElementNS(ns, 'g');
+    svg.appendChild(gEdges); svg.appendChild(gNodes);
+
+    for (const [a, b] of EDGES) {
+      const A = byId[a], B = byId[b];
+      const path = document.createElementNS(ns, 'path');
+      const dx = (B.x - A.x) * 0.5;
+      path.setAttribute('d', `M${A.x} ${A.y} C${A.x + dx} ${A.y}, ${B.x - dx} ${B.y}, ${B.x} ${B.y}`);
+      path.setAttribute('class', 'edge');
+      gEdges.appendChild(path);
+      edgeEls.set(edgeKey(a, b), path);
+    }
+
+    for (const n of NODES) {
+      const g = document.createElementNS(ns, 'g');
+      g.setAttribute('class', `node c-${n.c}`);
+      g.setAttribute('transform', `translate(${n.x} ${n.y})`);
+      const subLine = n.sub ? `<text class="sub" y="36">${n.sub}</text>` : '';
+      g.innerHTML = `
+        <circle class="halo" r="14"/>
+        <circle class="ring" r="14"/>
+        <g class="glyph" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${GLYPHS[n.glyph]}</g>
+        <text class="lbl" y="27">${n.lbl}</text>${subLine}
+        <circle class="count-bg" cx="12" cy="-11" r="6"/>
+        <text class="count" x="12" y="-8.3">0</text>`;
+      gNodes.appendChild(g);
+      nodeEls.set(n.id, g);
+    }
+  }
+  buildNetwork();
+
+  const activeTimers = new Map();
+  function activateNode(id, ms = 1400) {
+    const el = nodeEls.get(id); if (!el) return;
+    el.classList.add('active', 'touched');
+    nodeHits.set(id, (nodeHits.get(id) || 0) + 1);
+    el.querySelector('.count').textContent = nodeHits.get(id);
+    clearTimeout(activeTimers.get(id));
+    activeTimers.set(id, setTimeout(() => el.classList.remove('active'), ms));
+  }
+  function flowEdge(a, b, color, ms = 1400) {
+    const el = edgeEls.get(edgeKey(a, b)); if (!el) return;
+    el.style.setProperty('--c', color);
+    el.classList.add('flow', 'hot');
+    const k = 'e:' + edgeKey(a, b);
+    clearTimeout(activeTimers.get(k));
+    activeTimers.set(k, setTimeout(() => el.classList.remove('flow'), ms));
+  }
+  let cascadeTimers = [];
+  function resetNetwork() {
+    for (const [id, el] of nodeEls) { el.classList.remove('active', 'touched'); nodeHits.set(id, 0); el.querySelector('.count').textContent = '0'; }
+    for (const el of edgeEls.values()) el.classList.remove('flow', 'hot');
+    for (const t of activeTimers.values()) clearTimeout(t);
+    activeTimers.clear();
+    cascadeTimers.forEach(clearTimeout); cascadeTimers = [];
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  App state & persistence (compatible with the previous UI's storage key)
+  // ═══════════════════════════════════════════════════════════════════════════
+  const STORAGE_KEY = 'holiday_ai_state';
+  const state = { userId: '', currentThreadId: null, threads: [], isLoading: false };
+
+  const $ = (id) => document.getElementById(id);
+
+  function initApp() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+      state.userId = saved?.userId || generateUserId();
+      state.threads = saved?.threads || [];
+    } catch { state.userId = generateUserId(); }
+    $('user-id-display').textContent = state.userId;
+    $('user-avatar').textContent = state.userId.slice(5, 7).toUpperCase();
+    renderThreadList();
+    buildPhaseFilter();
+    setupEvents();
+  }
+  const generateUserId = () => 'user_' + Math.random().toString(36).slice(2, 10);
+  const generateThreadId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ userId: state.userId, threads: state.threads.slice(0, 30) }));
+  }
+
+  // ─── Helpers ────────────────────────────────────────────────────────────────
+  const AGENT_LABEL = { hotels: 'Hotels', transport: 'Transport', policy: 'Policy' };
+  const AGENT_CSS = { hotels: 'var(--hotels)', transport: 'var(--transport)', policy: 'var(--policy)' };
+  const PHASE_LABEL = { orchestrator: 'Orchestrator', llm: 'LLM', agent: 'Agent', tool: 'Tool', vector_search: 'Vector search', memory: 'Memory', mongodb: 'MongoDB' };
+  const PHASE_CSS = { orchestrator: 'var(--orch)', llm: 'var(--llm)', agent: 'var(--transport)', tool: 'var(--transport)', vector_search: 'var(--vector)', memory: 'var(--memory)', mongodb: 'var(--mongo)' };
+
+  function escapeHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function fmtDuration(ms) { if (ms == null) return ''; return ms < 1000 ? ms + 'ms' : (ms / 1000).toFixed(ms < 10000 ? 2 : 1) + 's'; }
+  function formatTime(iso) {
+    if (!iso) return '';
+    const diff = Date.now() - new Date(iso).getTime();
+    if (diff < 60000) return 'just now';
+    if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+    return new Date(iso).toLocaleDateString();
+  }
+  function setTheme(agent) {
+    document.documentElement.style.setProperty('--theme', AGENT_CSS[agent] || 'var(--accent)');
+    scene3d.setAgent(agent);
+  }
+  function setBusy(busy, label) {
+    state.isLoading = busy;
+    $('status').classList.toggle('busy', busy);
+    $('status-text').textContent = label || (busy ? 'Working' : 'Idle');
+    $('composer-inner').classList.toggle('busy', busy);
+    $('control').classList.toggle('live', busy);
+    $('send-btn').disabled = busy;
+    scene3d.setBusy(busy);
+  }
+  let toastTimer;
+  function toast(msg) {
+    const t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  function renderMarkdown(text) {
+    let html = escapeHtml(text)
+      .replace(/```(\w*)\n?([\s\S]*?)```/g, (_, l, code) => `<pre><code>${code.trim()}</code></pre>`)
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
+      .replace(/^\s*[-•*]\s+(.+)$/gm, '<li>$1</li>')
+      .replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>')
+      .replace(/^---$/gm, '<hr />')
+      .replace(/\n\n+/g, '</p><p>')
+      .replace(/\n/g, '<br />');
+    html = html.replace(/((<li>.*?<\/li>(<br \/>)?)+)/gs, (m) => '<ul>' + m.replace(/<br \/>/g, '') + '</ul>');
+    if (!html.startsWith('<')) html = '<p>' + html + '</p>';
+    return html;
+  }
+
+  // ─── Session rail ───────────────────────────────────────────────────────────
+  function renderThreadList() {
+    const list = $('thread-list');
+    list.innerHTML = '';
+    if (!state.threads.length) { list.innerHTML = '<div class="rail-empty">No journeys yet</div>'; return; }
+    [...state.threads].reverse().forEach(t => {
+      const el = document.createElement('div');
+      el.className = 'thread-item' + (t.id === state.currentThreadId ? ' active' : '');
+      el.innerHTML = `
+        <div class="thread-title">${escapeHtml(t.title)}</div>
+        <div class="thread-meta">
+          ${t.lastAgent ? `<span class="thread-dot" style="background:${AGENT_CSS[t.lastAgent] || 'var(--text-3)'}"></span>${AGENT_LABEL[t.lastAgent] || t.lastAgent} ·` : ''}
+          <span>${formatTime(t.createdAt)}</span>
+        </div>`;
+      el.addEventListener('click', () => loadThread(t.id));
+      list.appendChild(el);
+    });
+  }
+  function renderHeaderAgent(agent) {
+    $('header-agent').innerHTML = agent ? `<span class="agent-chip ${agent}">${AGENT_LABEL[agent] || agent}</span>` : '';
+    setTheme(agent);
+  }
+
+  function startNewChat() {
+    state.currentThreadId = null;
+    $('thread-title').textContent = 'New journey';
+    $('messages').innerHTML = '';
+    $('hero').style.display = 'flex';
+    renderHeaderAgent(null);
+    renderThreadList();
+    clearTimeline();
+    $('message-input').focus();
+  }
+
+  function loadThread(id) {
+    const t = state.threads.find(x => x.id === id); if (!t) return;
+    state.currentThreadId = id;
+    $('thread-title').textContent = t.title;
+    $('hero').style.display = 'none';
+    $('messages').innerHTML = '';
+    let lastSteps = null;
+    t.messages.forEach(m => {
+      if (m.role === 'user') appendUser(m.content);
+      else { appendAnswer(m.content, m.agent, m.steps || []); if (m.steps?.length) lastSteps = m.steps; }
+    });
+    renderHeaderAgent(t.lastAgent);
+    renderThreadList();
+    if (lastSteps) replayTimeline(lastSteps, 'replayed from history'); else clearTimeline();
+    scrollFeed();
+    if (window.innerWidth <= 1080) $('control').classList.remove('open');
+  }
+
+  // ─── Conversation rendering ─────────────────────────────────────────────────
+  function appendUser(text) {
+    $('hero').style.display = 'none';
+    const el = document.createElement('div');
+    el.className = 'turn user';
+    el.innerHTML = `<div class="brief">${escapeHtml(text)}</div>`;
+    $('messages').appendChild(el);
+    return el;
+  }
+
+  function summarise(steps) {
+    const done = steps.filter(s => s.status !== 'running');
+    const vec = done.filter(s => s.phase === 'vector_search').length;
+    const mongo = done.filter(s => s.phase === 'mongodb' || s.phase === 'memory').length;
+    const ts = steps.map(s => s.ts).filter(Boolean);
+    const span = ts.length ? Math.max(...ts) - Math.min(...ts) : 0;
+    return { total: done.length, vec, mongo, span };
+  }
+
+  function answerHead(agent, steps) {
+    const s = summarise(steps || []);
+    const chip = agent ? `<span class="agent-chip ${agent}">${AGENT_LABEL[agent] || agent}</span>` : '';
+    const stats = steps?.length ? `
+      <div class="answer-stats">
+        <span><b>${s.total}</b> steps</span>
+        <span><b>${s.vec}</b> vector</span>
+        <span><b>${s.mongo}</b> mongo</span>
+        <span><b>${fmtDuration(s.span)}</b></span>
+      </div>
+      <button class="trace-btn">Replay trace</button>` : '';
+    return `<span class="who">Holiday AI</span>${chip}<span class="spacer"></span>${stats}`;
+  }
+
+  function appendAnswer(content, agent, steps) {
+    const el = document.createElement('div');
+    el.className = 'turn bot';
+    el.innerHTML = `
+      <div class="answer">
+        <div class="answer-head">${answerHead(agent, steps)}</div>
+        <div class="answer-body">${renderMarkdown(content)}</div>
+      </div>`;
+    el.querySelector('.trace-btn')?.addEventListener('click', () => {
+      replayTimeline(steps, 'replayed from history');
+      if (window.innerWidth <= 1080) $('control').classList.add('open');
+    });
+    $('messages').appendChild(el);
+    return el;
+  }
+
+  function scrollFeed() { const f = $('feed'); f.scrollTop = f.scrollHeight; }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  Timeline + metrics
+  // ═══════════════════════════════════════════════════════════════════════════
+  const tl = { stepEls: new Map(), steps: [], start: 0, timer: null, hidden: new Set(), maxDur: 1 };
+
+  function buildPhaseFilter() {
+    const wrap = $('tl-filter');
+    for (const p of Object.keys(PHASE_LABEL)) {
+      if (p === 'tool') continue;
+      const b = document.createElement('button');
+      b.title = PHASE_LABEL[p];
+      b.style.setProperty('--c', PHASE_CSS[p]);
+      b.addEventListener('click', () => {
+        if (tl.hidden.has(p)) tl.hidden.delete(p); else tl.hidden.add(p);
+        b.classList.toggle('off', tl.hidden.has(p));
+        for (const [, el] of tl.stepEls) el.classList.toggle('hidden', tl.hidden.has(el.dataset.phase === 'tool' ? 'agent' : el.dataset.phase));
+      });
+      wrap.appendChild(b);
+    }
+  }
+
+  function clearTimeline() {
+    tl.stepEls.clear(); tl.steps = []; tl.maxDur = 1;
+    clearInterval(tl.timer); tl.timer = null;
+    $('timeline').innerHTML = '<div class="tl-empty">Send a request and every routing decision, <b>vector search</b>, <b>MongoDB</b> operation and <b>memory</b> read/write will stream here in real time.</div>';
+    $('m-steps').textContent = '0'; $('m-vector').textContent = '0'; $('m-mongo').textContent = '0'; $('m-time').textContent = '0.0s';
+    $('control-sub').textContent = 'waiting for a request';
+    resetNetwork();
+  }
+
+  function beginTimeline(label) {
+    clearTimeline();
+    $('timeline').innerHTML = '';
+    tl.start = Date.now();
+    $('control-sub').textContent = label;
+    tl.timer = setInterval(() => { $('m-time').textContent = ((Date.now() - tl.start) / 1000).toFixed(1) + 's'; }, 100);
+  }
+
+  function stopTimelineClock(span) {
+    clearInterval(tl.timer); tl.timer = null;
+    if (span != null) $('m-time').textContent = (span / 1000).toFixed(1) + 's';
+  }
+
+  function stepHtml(step) {
+    const dur = step.durationMs != null ? `<span class="step-dur">${fmtDuration(step.durationMs)}</span>` : '';
+    const detail = step.detail ? `<div class="step-detail">${escapeHtml(step.detail)}</div>` : '';
+    const ns = (step.db && step.collection) ? `
+      <div class="step-ns">
+        <svg viewBox="0 0 24 24" fill="var(--mongo)"><path d="M12 2.5c3 3.6 4.5 7 4.5 10.2 0 3.3-1.6 6-4.5 8.8-2.9-2.8-4.5-5.5-4.5-8.8C7.5 9.5 9 6.1 12 2.5z"/></svg>
+        ${escapeHtml(step.db)}.<span class="ns-leaf">${escapeHtml(step.collection)}</span>${step.index ? ` · <span class="ns-idx">${escapeHtml(step.index)}</span>` : ''}
+      </div>` : '';
+    const bar = step.durationMs != null ? `<div class="step-bar" style="--w:${Math.max(4, Math.min(100, step.durationMs / tl.maxDur * 100))}%"></div>` : '';
+    return `
+      <div class="step-rail"><div class="step-dot"></div><div class="step-line"></div></div>
+      <div class="step-main">
+        <div class="step-top">
+          <span class="step-title">${escapeHtml(step.title || '')}</span>
+          <span class="step-phase">${PHASE_LABEL[step.phase] || step.phase}</span>${dur}
+        </div>${detail}${ns}${bar}
+      </div>`;
+  }
+
+  function updateMetrics() {
+    const s = summarise(tl.steps);
+    $('m-steps').textContent = s.total;
+    $('m-vector').textContent = s.vec;
+    $('m-mongo').textContent = s.mongo;
+  }
+
+  let currentAgent = null;
+  function agentFromStep(step) {
+    if (step.agent && AGENT_LABEL[step.agent]) return step.agent;
+    const m = /(?:Routed to|Handing off to)\s+(hotels|transport|policy)/i.exec(step.title || '')
+      || /^(Hotels|Transport|Policy) agent/i.exec(step.title || '');
+    return m ? m[1].toLowerCase() : null;
+  }
+
+  function animateNetwork(step, live) {
+    const phase = step.phase;
+    const a = agentFromStep(step);
+    if (a) currentAgent = a;
+    const from = currentAgent || 'orchestrator';
+    const color = PHASE_CSS[phase];
+    if (phase === 'orchestrator') {
+      activateNode('orchestrator');
+      if (/received/i.test(step.title)) { activateNode('user'); flowEdge('user', 'orchestrator', color); }
+      if (a) { activateNode(a); flowEdge('orchestrator', a, AGENT_CSS[a]); if (live) setTheme(a); }
+    } else if (phase === 'llm') {
+      const src = /classifying/i.test(step.title || '') ? 'orchestrator' : from;
+      activateNode('llm'); activateNode(src, 900); flowEdge(src, 'llm', color);
+    } else if (phase === 'agent' || phase === 'tool') {
+      if (a) { activateNode(a); flowEdge('orchestrator', a, AGENT_CSS[a]); if (live) setTheme(a); }
+      else activateNode('orchestrator');
+    } else if (phase === 'vector_search' || phase === 'mongodb' || phase === 'memory') {
+      const col = step.collection || (phase === 'memory' ? 'long_term_memory' : null);
+      const node = col ? 'col:' + col : null;
+      if (node && nodeEls.has(node)) {
+        activateNode(node);
+        const src = (phase === 'memory' && !AGENT_LABEL[step.agent]) ? 'orchestrator' : from;
+        flowEdge(src, node, color);
+        activateNode(src, 900);
+      }
+      if (live && phase === 'vector_search' && step.status === 'running') scene3d.pulse(0x2dd4bf);
+    }
+  }
+
+  function upsertStep(step, live = true) {
+    const body = $('timeline');
+    let el = tl.stepEls.get(step.id);
+    const isNew = !el;
+    if (isNew) {
+      el = document.createElement('div');
+      tl.stepEls.set(step.id, el);
+      body.appendChild(el);
+      tl.steps.push(step);
+    } else {
+      const i = tl.steps.findIndex(s => s.id === step.id); if (i >= 0) tl.steps[i] = step;
+    }
+    if (step.durationMs) tl.maxDur = Math.max(tl.maxDur, step.durationMs);
+    const a = agentFromStep(step) || currentAgent;
+    el.className = `step p-${step.phase || 'tool'}` + (a ? ` a-${a}` : '') +
+      (step.status === 'running' ? ' running' : step.status === 'error' ? ' error' : '');
+    el.dataset.phase = step.phase || 'tool';
+    if (tl.hidden.has(el.dataset.phase === 'tool' ? 'agent' : el.dataset.phase)) el.classList.add('hidden');
+    el.innerHTML = stepHtml(step);
+    body.scrollTop = body.scrollHeight;
+    updateMetrics();
+    if (live) {
+      $('control-sub').textContent = step.status === 'running' ? step.title : (step.title || '');
+      animateNetwork(step, true);
+    }
+  }
+
+  function replayTimeline(steps, label) {
+    currentAgent = null;
+    beginTimeline(label);
+    stopTimelineClock(0);
+    const sorted = [...steps].sort((x, y) => (x.ts || 0) - (y.ts || 0));
+    sorted.forEach(s => upsertStep(s, false));
+    // Light the network up in a quick cascade so the audience sees the route.
+    cascadeTimers = sorted.map((s, i) => setTimeout(() => animateNetwork(s, false), i * 90));
+    const span = summarise(sorted).span;
+    stopTimelineClock(span);
+    $('control-sub').textContent = label;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  Send (NDJSON streaming)
+  // ═══════════════════════════════════════════════════════════════════════════
+  async function sendMessage(text) {
+    text = text.trim();
+    if (!text || state.isLoading) return;
+
+    $('message-input').value = '';
+    resetInput();
+
+    if (!state.currentThreadId) {
+      state.currentThreadId = generateThreadId();
+      state.threads.push({
+        id: state.currentThreadId,
+        title: text.slice(0, 50) + (text.length > 50 ? '…' : ''),
+        messages: [], lastAgent: null, createdAt: new Date().toISOString(),
+      });
+      $('thread-title').textContent = state.threads.at(-1).title;
+    }
+    const thread = state.threads.find(t => t.id === state.currentThreadId);
+    thread.messages.push({ role: 'user', content: text, agent: null });
+    const isNew = thread.messages.filter(m => m.role === 'user').length === 1;
+
+    appendUser(text);
+    setBusy(true, 'Routing');
+    currentAgent = null;
+    beginTimeline('request in flight');
+    renderThreadList();
+
+    // Pending answer card.
+    const turn = document.createElement('div');
+    turn.className = 'turn bot';
+    turn.innerHTML = `
+      <div class="answer">
+        <div class="answer-head"><span class="who">Holiday AI</span><span class="spacer"></span><span class="answer-stats" id="live-stats"></span></div>
+        <div class="thinking">
+          <div class="orbit"><i></i><i></i><i></i></div>
+          <div class="thinking-text">
+            <div class="thinking-title" id="think-title">Orchestrator is reading your request</div>
+            <div class="thinking-sub" id="think-sub">Recalling long-term memory for <span class="mono">${escapeHtml(state.userId)}</span></div>
+          </div>
+        </div>
+        <div class="inline-trace"></div>
+      </div>`;
+    $('messages').appendChild(turn);
+    scrollFeed();
+
+    const steps = [];
+    const onStep = (step) => {
+      const i = steps.findIndex(s => s.id === step.id);
+      if (i >= 0) steps[i] = step; else steps.push(step);
+      upsertStep(step, true);
+      const title = $('think-title'), sub = $('think-sub');
+      if (title) {
+        title.textContent = step.title || PHASE_LABEL[step.phase];
+        sub.innerHTML = step.detail ? escapeHtml(step.detail)
+          : (step.db && step.collection ? `<span class="mono">${escapeHtml(step.db)}.${escapeHtml(step.collection)}</span>` : PHASE_LABEL[step.phase] || '');
+      }
+      const s = summarise(steps);
+      const ls = $('live-stats');
+      if (ls) ls.innerHTML = `<span><b>${s.total}</b> steps</span><span><b>${s.vec}</b> vector</span><span><b>${s.mongo}</b> mongo</span>`;
+      const a = agentFromStep(step);
+      if (a) $('status-text').textContent = AGENT_LABEL[a] + ' agent';
+      else if (step.phase === 'vector_search') $('status-text').textContent = 'Vector search';
+      else if (step.phase === 'memory') $('status-text').textContent = 'Memory';
+    };
+
+    try {
+      const url = isNew ? '/chat/stream' : `/chat/stream/${state.currentThreadId}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, userId: state.userId }),
+      });
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '', finalEvt = null, errorEvt = null;
+      const handleLine = (line) => {
+        if (!line) return;
+        let evt; try { evt = JSON.parse(line); } catch { return; }
+        if (evt.type === 'final') finalEvt = evt;
+        else if (evt.type === 'error') errorEvt = evt;
+        else if (evt.type === 'step') onStep(evt.step);
+      };
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let nl;
+        while ((nl = buffer.indexOf('\n')) >= 0) { handleLine(buffer.slice(0, nl).trim()); buffer = buffer.slice(nl + 1); }
+      }
+      handleLine(buffer.trim());
+
+      if (errorEvt) throw new Error(errorEvt.error || 'Server error');
+      if (!finalEvt) throw new Error('No response received');
+
+      const { response, agent, threadId } = finalEvt;
+      if (threadId && isNew) { state.currentThreadId = threadId; thread.id = threadId; }
+
+      const card = turn.querySelector('.answer');
+      card.innerHTML = `
+        <div class="answer-head">${answerHead(agent, steps)}</div>
+        <div class="answer-body">${renderMarkdown(response)}</div>`;
+      card.querySelector('.trace-btn')?.addEventListener('click', () => {
+        replayTimeline(steps, 'replayed from history');
+        if (window.innerWidth <= 1080) $('control').classList.add('open');
+      });
+
+      thread.lastAgent = agent;
+      thread.messages.push({ role: 'bot', content: response, agent, steps });
+      renderHeaderAgent(agent);
+      renderThreadList();
+      saveState();
+      stopTimelineClock(summarise(steps).span);
+      $('control-sub').textContent = `done · ${AGENT_LABEL[agent] || agent} agent answered`;
+      scrollFeed();
+    } catch (err) {
+      const card = turn.querySelector('.answer');
+      card.innerHTML = `
+        <div class="answer-head"><span class="who">Holiday AI</span></div>
+        <div class="answer-body">${renderMarkdown(`Sorry, something went wrong: ${err.message}. Please try again.`)}</div>`;
+      stopTimelineClock();
+      $('control-sub').textContent = 'request failed';
+      toast('Request failed — check the server log.');
+    } finally {
+      setBusy(false);
+      $('message-input').focus();
+    }
+  }
+
+  // ─── Input & events ─────────────────────────────────────────────────────────
+  function resetInput() { const i = $('message-input'); i.style.height = 'auto'; }
+  function setupEvents() {
+    const input = $('message-input');
+    input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 160) + 'px'; });
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input.value); } });
+    $('send-btn').addEventListener('click', () => sendMessage(input.value));
+    $('new-chat-btn').addEventListener('click', startNewChat);
+    $('toggle-control').addEventListener('click', () => $('control').classList.toggle('open'));
+    document.querySelectorAll('.prompt').forEach(p => {
+      p.addEventListener('pointermove', (e) => {
+        const r = p.getBoundingClientRect();
+        p.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+        p.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+      });
+      p.addEventListener('click', () => sendMessage(p.dataset.query));
+    });
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); startNewChat(); }
+      if (e.key === '/' && document.activeElement !== input) { e.preventDefault(); input.focus(); }
+    });
+  }
+
+  initApp();
+</script>
+</body>
+</html>

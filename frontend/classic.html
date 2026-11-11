@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Holiday Planning Assistant</title>
+  <style>
+    /* ─── Reset & Variables ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary-dark:   #064e3b;
+      --primary-mid:    #065f46;
+      --primary:        #059669;
+      --primary-light:  #d1fae5;
+      --sidebar-bg:     #0d1f14;
+      --sidebar-hover:  #162b1e;
+      --sidebar-active: #1a3526;
+      --bg:             #F1F5F9;
+      --surface:        #FFFFFF;
+      --border:         #E2E8F0;
+      --text-primary:   #0F172A;
+      --text-secondary: #64748B;
+      --text-muted:     #94A3B8;
+      --user-bubble:    #059669;
+      --agent-hotels:      #16a34a;
+      --agent-transport:   #2563eb;
+      --agent-policy:      #9333ea;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.10);
+      --radius:    12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      height: 100dvh;
+      overflow: hidden;
+      display: flex;
+    }
+
+    /* ─── Sidebar ────────────────────────────────────────────────────── */
+    #sidebar {
+      width: 270px;
+      min-width: 270px;
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      color: #fff;
+      height: 100dvh;
+    }
+
+    .sidebar-header {
+      padding: 20px 16px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+
+    .logo-text { font-size: 15px; font-weight: 700; line-height: 1.2; }
+    .logo-sub  { font-size: 10px; color: rgba(255,255,255,.45); letter-spacing: .8px; text-transform: uppercase; }
+
+    #new-chat-btn {
+      width: 100%;
+      padding: 9px 14px;
+      background: rgba(5,150,105,.25);
+      border: 1px solid rgba(5,150,105,.4);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 8px;
+      transition: background .15s;
+    }
+    #new-chat-btn:hover { background: rgba(5,150,105,.45); }
+
+    .section-label {
+      padding: 12px 16px 4px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.3);
+    }
+
+    #thread-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 8px;
+    }
+
+    #thread-list::-webkit-scrollbar { width: 4px; }
+    #thread-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+
+    .thread-item {
+      padding: 10px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 2px;
+      transition: background .12s;
+    }
+    .thread-item:hover   { background: var(--sidebar-hover); }
+    .thread-item.active  { background: var(--sidebar-active); }
+
+    .thread-title {
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: rgba(255,255,255,.9);
+    }
+
+    .thread-meta {
+      font-size: 11px;
+      color: rgba(255,255,255,.35);
+      margin-top: 2px;
+      display: flex; gap: 6px; align-items: center;
+    }
+
+    .thread-agent-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .sidebar-footer {
+      padding: 14px 16px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+
+    .user-info {
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .user-avatar {
+      width: 32px; height: 32px;
+      background: var(--primary-mid);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .user-details { flex: 1; min-width: 0; }
+    .user-id-label { font-size: 10px; color: rgba(255,255,255,.35); }
+    .user-id-value {
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255,255,255,.75);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ─── Main area ──────────────────────────────────────────────────── */
+    #chat-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    /* ─── Header ─────────────────────────────────────────────────────── */
+    #chat-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    #chat-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .agent-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .agent-tag.hotels      { background: #d1fae5; color: #065f46; }
+    .agent-tag.transport   { background: #dbeafe; color: #1d4ed8; }
+    .agent-tag.policy      { background: #f3e8ff; color: #7e22ce; }
+
+    /* ─── Messages ───────────────────────────────────────────────────── */
+    #messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    #messages-container::-webkit-scrollbar { width: 6px; }
+    #messages-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ─── Welcome screen ─────────────────────────────────────────────── */
+    #welcome-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .welcome-icon {
+      font-size: 52px;
+      margin-bottom: 16px;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,.12));
+    }
+
+    .welcome-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .welcome-sub {
+      font-size: 14px;
+      color: var(--text-secondary);
+      max-width: 420px;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    .suggestions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .suggestion-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      cursor: pointer;
+      text-align: left;
+      transition: all .15s;
+      box-shadow: var(--shadow-sm);
+    }
+    .suggestion-card:hover {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(5,150,105,.08);
+    }
+
+    .suggestion-icon  { font-size: 20px; margin-bottom: 6px; }
+    .suggestion-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .suggestion-sub   { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+    /* ─── Message bubbles ─────────────────────────────────────────────── */
+    .message-group { display: flex; flex-direction: column; margin-bottom: 16px; }
+    .message-group.user  { align-items: flex-end; }
+    .message-group.bot   { align-items: flex-start; }
+
+    .message-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .bubble {
+      max-width: 72%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      line-height: 1.65;
+      font-size: 14px;
+      word-break: break-word;
+    }
+
+    .message-group.user .bubble {
+      background: var(--user-bubble);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message-group.bot .bubble {
+      background: var(--surface);
+      color: var(--text-primary);
+      border-bottom-left-radius: 4px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Markdown rendering inside bot bubbles */
+    .bubble h1, .bubble h2, .bubble h3 {
+      font-size: 14px; font-weight: 700; margin: 10px 0 4px;
+    }
+    .bubble strong { font-weight: 700; }
+    .bubble em     { font-style: italic; }
+    .bubble ul, .bubble ol { padding-left: 20px; margin: 8px 0; }
+    .bubble li     { margin: 3px 0; }
+    .bubble code   {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      background: #F1F5F9;
+      padding: 1px 5px;
+      border-radius: 4px;
+      color: #c7254e;
+    }
+    .bubble pre {
+      background: #F8FAFC;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      overflow-x: auto;
+      margin: 8px 0;
+      font-size: 12px;
+    }
+    .bubble pre code { background: none; padding: 0; color: inherit; }
+    .bubble a { color: var(--primary); text-decoration: underline; }
+    .bubble table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 12px; }
+    .bubble th, .bubble td { border: 1px solid var(--border); padding: 6px 10px; }
+    .bubble th { background: #F8FAFC; font-weight: 600; }
+    .bubble p  { margin: 6px 0; }
+    .bubble p:first-child { margin-top: 0; }
+    .bubble p:last-child  { margin-bottom: 0; }
+
+    /* ─── Loading dots ────────────────────────────────────────────────── */
+    .loading-bubble {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      border-bottom-left-radius: 4px;
+      padding: 14px 18px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .dot {
+      width: 7px; height: 7px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      animation: bounce 1.3s ease-in-out infinite;
+    }
+    .dot:nth-child(2) { animation-delay: .18s; }
+    .dot:nth-child(3) { animation-delay: .36s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30%            { transform: translateY(-6px); }
+    }
+
+    /* ─── Routing badge (inside bot bubble) ───────────────────────────── */
+    .routing-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 8px;
+    }
+
+    .routing-badge.hotels      { background: #d1fae5; color: #065f46; }
+    .routing-badge.transport   { background: #dbeafe; color: #1d4ed8; }
+    .routing-badge.policy      { background: #f3e8ff; color: #7e22ce; }
+
+    /* ─── Execution trace (live steps) ────────────────────────────────── */
+    .trace {
+      --phase: var(--text-muted);
+      width: 100%;
+      max-width: 72%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      overflow: hidden;
+      transition: border-color .25s ease, box-shadow .25s ease;
+    }
+    /* Becomes the focal point only while work is streaming in. */
+    .trace.is-live {
+      border-color: rgba(5,150,105,.45);
+      box-shadow: 0 0 0 3px rgba(5,150,105,.07), 0 6px 20px rgba(15,23,42,.06);
+    }
+
+    .trace-header {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .trace.collapsed .trace-header { border-bottom: none; }
+
+    .trace-pulse {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      flex-shrink: 0;
+      transition: background .25s;
+    }
+    .trace.is-live .trace-pulse {
+      background: var(--primary);
+      box-shadow: 0 0 0 0 rgba(5,150,105,.5);
+      animation: tracePulse 1.6s ease-out infinite;
+    }
+    @keyframes tracePulse {
+      0%   { box-shadow: 0 0 0 0 rgba(5,150,105,.45); }
+      70%  { box-shadow: 0 0 0 6px rgba(5,150,105,0); }
+      100% { box-shadow: 0 0 0 0 rgba(5,150,105,0); }
+    }
+
+    .trace-title {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      flex: 1;
+    }
+
+    .trace-count {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .trace-chevron {
+      color: var(--text-muted);
+      transition: transform .2s;
+    }
+    .trace.collapsed .trace-chevron { transform: rotate(-90deg); }
+
+    .trace-body {
+      padding: 4px 12px 10px;
+      display: flex;
+      flex-direction: column;
+      max-height: 440px;
+      overflow-y: auto;
+    }
+    .trace.collapsed .trace-body { display: none; }
+    .trace-body::-webkit-scrollbar { width: 5px; }
+    .trace-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .trace-step {
+      --phase: var(--text-muted);
+      display: flex;
+      gap: 11px;
+      padding: 5px 8px 5px 7px;
+      border-radius: 8px;
+      position: relative;
+      border-left: 2px solid transparent;
+      animation: stepIn .22s ease;
+    }
+    /* The currently-running step quietly draws focus. */
+    .trace-step.running {
+      background: rgba(5,150,105,.05);
+      border-left-color: var(--phase);
+    }
+
+    @keyframes stepIn {
+      from { opacity: 0; transform: translateY(-3px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-rail {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      padding-top: 4px;
+    }
+
+    .step-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--phase);
+      position: relative;
+    }
+    .step-dot.running {
+      background: transparent;
+      border: 1.5px solid var(--phase);
+    }
+    .step-dot.running::after {
+      content: '';
+      position: absolute;
+      inset: 1px;
+      border-radius: 50%;
+      background: var(--phase);
+      animation: dotPulse 1s ease-in-out infinite;
+    }
+    @keyframes dotPulse { 0%,100% { opacity: .25; transform: scale(.6); } 50% { opacity: 1; transform: scale(1); } }
+    .step-dot.error { background: #dc2626; }
+
+    .step-line {
+      width: 1.5px;
+      flex: 1;
+      min-height: 8px;
+      background: var(--border);
+      margin-top: 3px;
+    }
+    .trace-step:last-child .step-line { display: none; }
+
+    .step-main { flex: 1; min-width: 0; }
+
+    .step-top {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .step-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      line-height: 1.35;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .step-phase {
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      color: var(--phase);
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    /* Per-phase accent colour (drives dot + label + active highlight). */
+    .phase-orchestrator  { --phase: #d97706; }
+    .phase-llm           { --phase: #7c3aed; }
+    .phase-agent         { --phase: #2563eb; }
+    .phase-tool          { --phase: #2563eb; }
+    .phase-vector_search { --phase: #059669; }
+    .phase-memory        { --phase: #db2777; }
+    .phase-mongodb       { --phase: #059669; }
+
+    .step-duration {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+
+    .step-detail {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+      line-height: 1.4;
+    }
+
+    .step-ns {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 5px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 10.5px;
+      color: var(--text-secondary);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 2px 7px;
+      border-radius: 5px;
+    }
+    .step-ns .ns-index { color: var(--primary); font-weight: 600; }
+
+    /* ─── Input area ─────────────────────────────────────────────────── */
+    #input-area {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
+
+    #message-input {
+      flex: 1;
+      resize: none;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text-primary);
+      background: var(--bg);
+      outline: none;
+      max-height: 140px;
+      min-height: 44px;
+      line-height: 1.5;
+      transition: border-color .15s;
+    }
+    #message-input:focus { border-color: var(--primary); }
+    #message-input::placeholder { color: var(--text-muted); }
+
+    #send-btn {
+      width: 44px; height: 44px;
+      background: var(--primary);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s, transform .1s;
+      color: #fff;
+    }
+    #send-btn:hover   { background: var(--primary-mid); }
+    #send-btn:active  { transform: scale(.94); }
+    #send-btn:disabled { background: var(--border); cursor: not-allowed; }
+
+    /* ─── Responsive ─────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      #sidebar { display: none; }
+      .bubble  { max-width: 90%; }
+      .suggestions { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── Sidebar ─────────────────────────────────────────────────────────── -->
+<aside id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <div class="logo-icon">🏖️</div>
+      <div>
+        <div class="logo-text">Holiday AI</div>
+        <div class="logo-sub">Planning Assistant</div>
+      </div>
+    </div>
+    <button id="new-chat-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New conversation
+    </button>
+  </div>
+
+  <div class="section-label">Recent conversations</div>
+  <div id="thread-list"></div>
+
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div class="user-details">
+        <div class="user-id-label">Session User</div>
+        <div class="user-id-value" id="user-id-display">—</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ─── Main chat ────────────────────────────────────────────────────────── -->
+<main id="chat-main">
+
+  <div id="chat-header">
+    <div id="chat-title">New conversation</div>
+    <div id="header-agent-tag"></div>
+  </div>
+
+  <div id="messages-container">
+
+    <!-- Welcome screen -->
+    <div id="welcome-screen">
+      <div class="welcome-icon">🏖️</div>
+      <h1 class="welcome-title">Holiday Planning Assistant</h1>
+      <p class="welcome-sub">
+        Search hotels, plan your journey from A to B, or check travel policies.
+        The AI automatically routes your question to the right specialist.
+      </p>
+
+      <div class="suggestions">
+        <div class="suggestion-card" data-query="Find me a 4-star beachfront hotel in Santorini for 2 adults">
+          <div class="suggestion-icon">🏨</div>
+          <div class="suggestion-title">Search hotels</div>
+          <div class="suggestion-sub">4-star beachfront in Santorini</div>
+        </div>
+        <div class="suggestion-card" data-query="How do I get from London to Barcelona? Show me all transport options">
+          <div class="suggestion-icon">🚂</div>
+          <div class="suggestion-title">Plan a journey</div>
+          <div class="suggestion-sub">London → Barcelona transport options</div>
+        </div>
+        <div class="suggestion-card" data-query="What is the cancellation policy if I need to cancel my hotel booking?">
+          <div class="suggestion-icon">📋</div>
+          <div class="suggestion-title">Cancellation policy</div>
+          <div class="suggestion-sub">Hotel booking cancellation rules</div>
+        </div>
+        <div class="suggestion-card" data-query="Compare boutique hotels in Paris under £200 per night">
+          <div class="suggestion-icon">💰</div>
+          <div class="suggestion-title">Compare hotels</div>
+          <div class="suggestion-sub">Boutique Paris hotels under £200/night</div>
+        </div>
+        <div class="suggestion-card" data-query="Can I bring my dog to a resort in Mallorca?">
+          <div class="suggestion-icon">🐾</div>
+          <div class="suggestion-title">Pet policy</div>
+          <div class="suggestion-sub">Pet-friendly resorts in Mallorca</div>
+        </div>
+        <div class="suggestion-card" data-query="What is the cheapest way to travel from Paris to Amsterdam?">
+          <div class="suggestion-icon">🗺️</div>
+          <div class="suggestion-title">Budget travel</div>
+          <div class="suggestion-sub">Cheapest Paris → Amsterdam routes</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages injected here -->
+    <div id="messages"></div>
+  </div>
+
+  <div id="input-area">
+    <textarea
+      id="message-input"
+      rows="1"
+      placeholder="Ask about hotels, transport, or travel policies…"
+    ></textarea>
+    <button id="send-btn" title="Send (Enter)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+
+</main>
+
+<script>
+  // ─── State ──────────────────────────────────────────────────────────────────
+  const STORAGE_KEY = 'holiday_ai_state';
+
+  const state = {
+    userId: '',
+    currentThreadId: null,
+    threads: [],        // [{ id, title, messages[], lastAgent, createdAt }]
+    isLoading: false,
+  };
+
+  // ─── Init ────────────────────────────────────────────────────────────────────
+  function initApp() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        state.userId   = parsed.userId   || generateUserId();
+        state.threads  = parsed.threads  || [];
+      } catch { state.userId = generateUserId(); }
+    } else {
+      state.userId = generateUserId();
+    }
+
+    renderUserInfo();
+    renderThreadList();
+    setupEventListeners();
+    autoResizeInput();
+  }
+
+  function generateUserId() {
+    return 'user_' + Math.random().toString(36).slice(2, 10);
+  }
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      userId:  state.userId,
+      threads: state.threads.slice(0, 30),  // keep last 30 threads
+    }));
+  }
+
+  // ─── UI helpers ──────────────────────────────────────────────────────────────
+  function renderUserInfo() {
+    document.getElementById('user-id-display').textContent = state.userId;
+    document.getElementById('user-avatar').textContent =
+      state.userId.slice(5, 7).toUpperCase();
+  }
+
+  function agentLabel(agent) {
+    const map = { hotels: '🏨 Hotels', transport: '🚂 Transport', policy: '📋 Policy' };
+    return map[agent] || agent;
+  }
+
+  function agentColor(agent) {
+    const map = { hotels: '#16a34a', transport: '#2563eb', policy: '#9333ea' };
+    return map[agent] || '#94A3B8';
+  }
+
+  function renderThreadList() {
+    const list = document.getElementById('thread-list');
+    list.innerHTML = '';
+
+    if (!state.threads.length) {
+      list.innerHTML = '<div style="padding:12px 10px;font-size:12px;color:rgba(255,255,255,.3);text-align:center;">No conversations yet</div>';
+      return;
+    }
+
+    [...state.threads].reverse().forEach(thread => {
+      const item = document.createElement('div');
+      item.className = 'thread-item' + (thread.id === state.currentThreadId ? ' active' : '');
+      item.dataset.id = thread.id;
+
+      const dotColor = agentColor(thread.lastAgent);
+      item.innerHTML = `
+        <div class="thread-title">${escapeHtml(thread.title)}</div>
+        <div class="thread-meta">
+          ${thread.lastAgent ? `<span class="thread-agent-dot" style="background:${dotColor}"></span>${agentLabel(thread.lastAgent)}` : ''}
+          <span>${formatTime(thread.createdAt)}</span>
+        </div>
+      `;
+      item.addEventListener('click', () => loadThread(thread.id));
+      list.appendChild(item);
+    });
+  }
+
+  function renderHeaderAgent(agent) {
+    const tag = document.getElementById('header-agent-tag');
+    if (!agent) { tag.innerHTML = ''; return; }
+    tag.innerHTML = `<span class="agent-tag ${agent}">${agentLabel(agent)}</span>`;
+  }
+
+  function formatTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const now = new Date();
+    const diffMs = now - d;
+    if (diffMs < 60000)    return 'just now';
+    if (diffMs < 3600000)  return Math.floor(diffMs / 60000) + 'm ago';
+    if (diffMs < 86400000) return Math.floor(diffMs / 3600000) + 'h ago';
+    return d.toLocaleDateString();
+  }
+
+  // ─── Thread management ────────────────────────────────────────────────────────
+  function startNewChat() {
+    state.currentThreadId = null;
+    document.getElementById('chat-title').textContent = 'New conversation';
+    document.getElementById('messages').innerHTML = '';
+    document.getElementById('welcome-screen').style.display = 'flex';
+    document.getElementById('header-agent-tag').innerHTML = '';
+    renderThreadList();
+  }
+
+  function loadThread(threadId) {
+    const thread = state.threads.find(t => t.id === threadId);
+    if (!thread) return;
+
+    state.currentThreadId = threadId;
+    document.getElementById('chat-title').textContent = thread.title;
+    document.getElementById('welcome-screen').style.display = 'none';
+
+    const msgContainer = document.getElementById('messages');
+    msgContainer.innerHTML = '';
+
+    thread.messages.forEach(msg => {
+      appendMessage(msg.role, msg.content, msg.agent, false, msg.steps || null);
+    });
+
+    renderHeaderAgent(thread.lastAgent);
+    renderThreadList();
+    scrollToBottom();
+  }
+
+  // ─── Markdown renderer ────────────────────────────────────────────────────────
+  function renderMarkdown(text) {
+    // Escape HTML first (excluding intentional markdown)
+    let html = text
+      // Code blocks (``` ```)
+      .replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) =>
+        `<pre><code>${escapeHtml(code.trim())}</code></pre>`)
+      // Inline code
+      .replace(/`([^`]+)`/g, (_, code) => `<code>${escapeHtml(code)}</code>`)
+      // Headers
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm,  '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm,   '<h1>$1</h1>')
+      // Bold & italic
+      .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+      .replace(/\*\*(.+?)\*\*/g,     '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g,         '<em>$1</em>')
+      // Unordered lists
+      .replace(/^\s*[-•*]\s+(.+)$/gm, '<li>$1</li>')
+      // Ordered lists
+      .replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>')
+      // Horizontal rules
+      .replace(/^---$/gm, '<hr />')
+      // Paragraphs / line breaks
+      .replace(/\n\n+/g, '</p><p>')
+      .replace(/\n/g, '<br />');
+
+    // Wrap consecutive <li> in <ul>
+    html = html.replace(/((<li>.*?<\/li>)+)/gs, '<ul>$1</ul>');
+
+    // Wrap in <p> if not already a block element
+    if (!html.startsWith('<')) html = '<p>' + html + '</p>';
+    return html;
+  }
+
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ─── Execution trace rendering ────────────────────────────────────────────────
+  const PHASE_LABEL = {
+    orchestrator: 'Orchestrator',
+    llm: 'LLM',
+    agent: 'Agent',
+    tool: 'Tool',
+    vector_search: 'Vector Search',
+    memory: 'Memory',
+    mongodb: 'MongoDB',
+  };
+
+  function fmtDuration(ms) {
+    if (ms == null) return '';
+    if (ms < 1000) return ms + 'ms';
+    return (ms / 1000).toFixed(ms < 10000 ? 2 : 1) + 's';
+  }
+
+  function stepInner(step) {
+    const phase = step.phase || 'tool';
+    const status = step.status || 'done';
+
+    const dotClass = status === 'running' ? 'running' : status === 'error' ? 'error' : 'done';
+    const iconHtml = `<div class="step-dot ${dotClass}"></div>`;
+
+    const dur = step.durationMs != null
+      ? `<span class="step-duration">${fmtDuration(step.durationMs)}</span>` : '';
+
+    let ns = '';
+    if (step.db && step.collection) {
+      ns = `<div class="step-ns">${escapeHtml(step.db)}.${escapeHtml(step.collection)}` +
+        (step.index ? ` · <span class="ns-index">${escapeHtml(step.index)}</span>` : '') +
+        `</div>`;
+    }
+
+    const detail = step.detail
+      ? `<div class="step-detail">${escapeHtml(step.detail)}</div>` : '';
+
+    return `
+      <div class="step-rail">${iconHtml}<div class="step-line"></div></div>
+      <div class="step-main">
+        <div class="step-top">
+          <span class="step-title">${escapeHtml(step.title || '')}</span>
+          <span class="step-phase">${PHASE_LABEL[phase] || phase}</span>
+          ${dur}
+        </div>
+        ${detail}
+        ${ns}
+      </div>`;
+  }
+
+  /**
+   * Create a live trace panel. Returns helpers to push/update steps as they
+   * stream in, and to replay a stored list of steps.
+   */
+  function createTraceView(initialSteps) {
+    const wrap = document.createElement('div');
+    wrap.className = 'trace';
+
+    const header = document.createElement('div');
+    header.className = 'trace-header';
+    header.innerHTML = `
+      <div class="trace-pulse"></div>
+      <div class="trace-title">Execution trace</div>
+      <div class="trace-count">0 steps</div>
+      <svg class="trace-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    `;
+    const body = document.createElement('div');
+    body.className = 'trace-body';
+
+    header.addEventListener('click', () => wrap.classList.toggle('collapsed'));
+
+    wrap.appendChild(header);
+    wrap.appendChild(body);
+
+    const countEl = header.querySelector('.trace-count');
+    const stepEls = new Map();
+    let count = 0;
+
+    function upsert(step) {
+      let el = stepEls.get(step.id);
+      if (!el) {
+        el = document.createElement('div');
+        el.className = 'trace-step';
+        stepEls.set(step.id, el);
+        body.appendChild(el);
+        count += 1;
+        countEl.textContent = count + (count === 1 ? ' step' : ' steps');
+      }
+      el.className = `trace-step phase-${step.phase || 'tool'}` +
+        (step.status === 'running' ? ' running' : '');
+      el.innerHTML = stepInner(step);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    (initialSteps || []).forEach(upsert);
+
+    return { el: wrap, upsert };
+  }
+
+  // ─── Message rendering ────────────────────────────────────────────────────────
+  function appendMessage(role, content, agent, scroll = true, steps = null) {
+    const welcomeScreen = document.getElementById('welcome-screen');
+    welcomeScreen.style.display = 'none';
+
+    const container = document.getElementById('messages');
+    const group = document.createElement('div');
+    group.className = `message-group ${role}`;
+
+    if (role === 'user') {
+      group.innerHTML = `
+        <div class="message-meta">You</div>
+        <div class="bubble">${escapeHtml(content)}</div>
+      `;
+    } else {
+      group.innerHTML = `<div class="message-meta">Holiday AI</div>`;
+
+      if (steps && steps.length) {
+        const trace = createTraceView(steps);
+        trace.el.classList.add('collapsed');
+        group.appendChild(trace.el);
+      }
+
+      const badge = agent
+        ? `<div class="routing-badge ${agent}">${agentLabel(agent)}</div>`
+        : '';
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.innerHTML = `${badge}${renderMarkdown(content)}`;
+      group.appendChild(bubble);
+    }
+
+    container.appendChild(group);
+    if (scroll) scrollToBottom();
+    return group;
+  }
+
+  function showLoading() {
+    const container = document.getElementById('messages');
+    const loader = document.createElement('div');
+    loader.className = 'message-group bot';
+    loader.id = 'loading-indicator';
+    loader.innerHTML = `
+      <div class="message-meta">Holiday AI</div>
+      <div class="loading-bubble">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+    `;
+    container.appendChild(loader);
+    scrollToBottom();
+  }
+
+  function hideLoading() {
+    document.getElementById('loading-indicator')?.remove();
+  }
+
+  function scrollToBottom() {
+    const c = document.getElementById('messages-container');
+    c.scrollTop = c.scrollHeight;
+  }
+
+  // ─── Send message (streaming with live execution trace) ───────────────────────
+  async function sendMessage(text) {
+    text = text.trim();
+    if (!text || state.isLoading) return;
+
+    state.isLoading = true;
+    document.getElementById('send-btn').disabled = true;
+    document.getElementById('message-input').value = '';
+    resetInputHeight();
+
+    // If new thread, set up the state
+    const wasNew = !state.currentThreadId;
+    if (wasNew) {
+      state.currentThreadId = generateThreadId();
+      const thread = {
+        id: state.currentThreadId,
+        title: text.slice(0, 50) + (text.length > 50 ? '…' : ''),
+        messages: [],
+        lastAgent: null,
+        createdAt: new Date().toISOString(),
+      };
+      state.threads.push(thread);
+      document.getElementById('chat-title').textContent = thread.title;
+    }
+
+    // Append user message
+    appendMessage('user', text);
+
+    const thread = state.threads.find(t => t.id === state.currentThreadId);
+    thread.messages.push({ role: 'user', content: text, agent: null });
+
+    // Determine if this is the first user turn (=> create new server thread)
+    const isNew = thread.messages.filter(m => m.role === 'user').length === 1;
+
+    // Build a live bot group: trace panel + (initially) a loading bubble.
+    document.getElementById('welcome-screen').style.display = 'none';
+    const container = document.getElementById('messages');
+    const group = document.createElement('div');
+    group.className = 'message-group bot';
+    group.innerHTML = `<div class="message-meta">Holiday AI</div>`;
+    const trace = createTraceView();
+    trace.el.classList.add('is-live');
+    group.appendChild(trace.el);
+    const loading = document.createElement('div');
+    loading.className = 'loading-bubble';
+    loading.innerHTML = `<div class="dot"></div><div class="dot"></div><div class="dot"></div>`;
+    group.appendChild(loading);
+    container.appendChild(group);
+    scrollToBottom();
+
+    const steps = [];
+
+    const handleEvent = (evt) => {
+      if (evt.type === 'step') {
+        trace.upsert(evt.step);
+        // keep the latest version of each step (running → done)
+        const idx = steps.findIndex(s => s.id === evt.step.id);
+        if (idx >= 0) steps[idx] = evt.step; else steps.push(evt.step);
+        scrollToBottom();
+      }
+    };
+
+    try {
+      const url = isNew ? '/chat/stream' : `/chat/stream/${state.currentThreadId}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, userId: state.userId }),
+      });
+
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let finalEvent = null;
+      let errorEvent = null;
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        let nl;
+        while ((nl = buffer.indexOf('\n')) >= 0) {
+          const line = buffer.slice(0, nl).trim();
+          buffer = buffer.slice(nl + 1);
+          if (!line) continue;
+          let evt;
+          try { evt = JSON.parse(line); } catch { continue; }
+          if (evt.type === 'final') finalEvent = evt;
+          else if (evt.type === 'error') errorEvent = evt;
+          else handleEvent(evt);
+        }
+      }
+      // flush any trailing buffered line
+      if (buffer.trim()) {
+        try {
+          const evt = JSON.parse(buffer.trim());
+          if (evt.type === 'final') finalEvent = evt;
+          else if (evt.type === 'error') errorEvent = evt;
+          else handleEvent(evt);
+        } catch { /* ignore */ }
+      }
+
+      if (errorEvent) throw new Error(errorEvent.error || 'Server error');
+      if (!finalEvent) throw new Error('No response received');
+
+      const { response, agent, threadId } = finalEvent;
+
+      if (threadId && isNew) {
+        state.currentThreadId = threadId;
+        thread.id = threadId;
+      }
+
+      // Replace the loading bubble with the rendered answer.
+      loading.remove();
+      trace.el.classList.remove('is-live');
+      trace.el.classList.add('collapsed');
+      const badge = agent ? `<div class="routing-badge ${agent}">${agentLabel(agent)}</div>` : '';
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.innerHTML = `${badge}${renderMarkdown(response)}`;
+      group.appendChild(bubble);
+
+      thread.lastAgent = agent;
+      thread.messages.push({ role: 'bot', content: response, agent, steps });
+
+      renderHeaderAgent(agent);
+      renderThreadList();
+      saveState();
+      scrollToBottom();
+
+    } catch (err) {
+      loading.remove();
+      trace.el.classList.remove('is-live');
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.innerHTML = renderMarkdown(`Sorry, something went wrong: ${err.message}. Please try again.`);
+      group.appendChild(bubble);
+    } finally {
+      state.isLoading = false;
+      document.getElementById('send-btn').disabled = false;
+      document.getElementById('message-input').focus();
+    }
+  }
+
+  function generateThreadId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
+  // ─── Input auto-resize ─────────────────────────────────────────────────────────
+  function autoResizeInput() {
+    const input = document.getElementById('message-input');
+    input.addEventListener('input', () => {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 140) + 'px';
+    });
+  }
+
+  function resetInputHeight() {
+    const input = document.getElementById('message-input');
+    input.style.height = 'auto';
+  }
+
+  // ─── Event listeners ───────────────────────────────────────────────────────────
+  function setupEventListeners() {
+    // New chat button
+    document.getElementById('new-chat-btn').addEventListener('click', startNewChat);
+
+    // Send button
+    document.getElementById('send-btn').addEventListener('click', () => {
+      const text = document.getElementById('message-input').value;
+      sendMessage(text);
+    });
+
+    // Enter to send (Shift+Enter for newline)
+    document.getElementById('message-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const text = e.target.value;
+        sendMessage(text);
+      }
+    });
+
+    // Suggestion cards
+    document.querySelectorAll('.suggestion-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const query = card.dataset.query;
+        document.getElementById('message-input').value = query;
+        sendMessage(query);
+      });
+    });
+  }
+
+  // ─── Boot ───────────────────────────────────────────────────────────────────────
+  initApp();
+</script>
+</body>
+</html>
